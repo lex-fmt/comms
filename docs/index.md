@@ -5,7 +5,7 @@ title: Home
 
 # Welcome to lex
 
-lex is a plain text document format designed for the complete lifecycle of an idea. It scales from a fleeting thought to a finished thesis, from a line of code to a novel.
+lex is a plain text document format designed for the complete lifecycle of an idea. It scales from a fleeting thought to a finished thesis, from a line of code to a novel. New
 
 ## Core Philosophy
 
