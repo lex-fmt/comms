@@ -30,7 +30,7 @@ jobs:
 
       - name: Download lex CLI
         env:
-          LEX_VERSION: v0.2.6
+          LEX_VERSION: lex-cli-v0.2.6
           LEX_ARCHIVE: lex-x86_64-unknown-linux-gnu.tar.gz
         run: |
           mkdir -p "$RUNNER_TEMP/lex-cli"
