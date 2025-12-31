@@ -66,3 +66,8 @@ This is a marker annotation at the root level, attached to the definition above.
     :: image src="logo.png" alt="Lex Logo"
 
 Final paragraph at the end of the document. {{paragraph}}
+
+Notes
+
+    42. The answer to life, the universe, and everything.
+
