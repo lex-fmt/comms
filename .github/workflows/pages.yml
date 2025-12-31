@@ -28,6 +28,22 @@ jobs:
           bundler-cache: true
           working-directory: docs
 
+      - name: Download lex CLI
+        env:
+          LEX_VERSION: v0.2.6
+          LEX_ARCHIVE: lex-x86_64-unknown-linux-gnu.tar.gz
+        run: |
+          mkdir -p "$RUNNER_TEMP/lex-cli"
+          curl -sSL "https://github.com/lex-fmt/tools/releases/download/${LEX_VERSION}/${LEX_ARCHIVE}" -o "$RUNNER_TEMP/lex-cli/lex.tgz"
+          tar -xzf "$RUNNER_TEMP/lex-cli/lex.tgz" -C "$RUNNER_TEMP/lex-cli"
+          chmod +x "$RUNNER_TEMP/lex-cli/lex"
+
+      - name: Generate Lex HTML
+        working-directory: docs
+        env:
+          LEX_BIN: ${{ runner.temp }}/lex-cli/lex
+        run: bin/build-lex.sh
+
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
