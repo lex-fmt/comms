@@ -64,4 +64,9 @@ Kitchensink Test Document {{paragraph}}
     Image Reference (Marker Verbatim Block):
     :: image src="logo.png" alt="Lex Logo"
 
-  Final paragraph at the end of the document. {{paragraph}}
+Final paragraph at the end of the document. {{paragraph}}
+
+Notes
+
+    42. The answer to life, the universe, and everything.
+
