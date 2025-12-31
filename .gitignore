@@ -51,3 +51,5 @@ specs/**/*.treeviz.*
 *.app
 .vite
 test-results
+docs/_includes/lex/
+docs/_site/
