@@ -29,12 +29,15 @@ jobs:
           working-directory: docs
 
       - name: Download lex CLI
-        env:
-          LEX_VERSION: lex-cli-v0.2.6
-          LEX_ARCHIVE: lex-x86_64-unknown-linux-gnu.tar.gz
         run: |
+          # Read pinned version from shared/lex-deps.json
+          LEX_VERSION=$(jq -r '.["lex-cli"]' shared/lex-deps.json)
+          LEX_REPO=$(jq -r '.["lex-cli-repo"]' shared/lex-deps.json)
+          LEX_ARCHIVE="lex-x86_64-unknown-linux-gnu.tar.gz"
+          echo "Using lex-cli version: $LEX_VERSION from $LEX_REPO"
+
           mkdir -p "$RUNNER_TEMP/lex-cli"
-          curl -sSL "https://github.com/lex-fmt/tools/releases/download/${LEX_VERSION}/${LEX_ARCHIVE}" -o "$RUNNER_TEMP/lex-cli/lex.tgz"
+          curl -sSL "https://github.com/${LEX_REPO}/releases/download/${LEX_VERSION}/${LEX_ARCHIVE}" -o "$RUNNER_TEMP/lex-cli/lex.tgz"
           tar -xzf "$RUNNER_TEMP/lex-cli/lex.tgz" -C "$RUNNER_TEMP/lex-cli"
           chmod +x "$RUNNER_TEMP/lex-cli/lex"
 
