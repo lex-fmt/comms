@@ -42,7 +42,7 @@ jobs:
         working-directory: docs
         env:
           LEX_BIN: ${{ runner.temp }}/lex-cli/lex
-        run: bin/build-lex.sh
+        run: ./build
 
       - name: Setup Pages
         uses: actions/configure-pages@v4

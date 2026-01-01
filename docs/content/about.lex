@@ -1,6 +1,6 @@
 About
 
-1. About lex
+1. About lext
 
     lex is a plain text document format for structured documents. It combines the immediacy of plain text with the rigor of hierarchical, machine-readable markup so you can stay in the flow from first note to published artifact.
 

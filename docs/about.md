@@ -1,7 +1,6 @@
 ---
 layout: default
 title: About
-lex_source: pages/about.lex
 ---
 
-{% include lex/pages/about.html %}
+{% include _lex/about.html %}
