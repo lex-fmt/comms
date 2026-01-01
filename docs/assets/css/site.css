@@ -1,36 +1,64 @@
-* {
+/*
+ * site.css - Jekyll Site Shell
+ *
+ * Controls the page chrome: header, navigation, footer, and main layout.
+ * Also styles markdown content authored in Jekyll pages (outside .lex-document).
+ * Does NOT style .lex-* elements - see lex-content.css for that.
+ */
+
+/* === Reset === */
+*,
+*::before,
+*::after {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
-  line-height: 1.6;
-  color: #333;
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 2rem 1rem 4rem;
+/* === Page Layout === */
+html {
+  font-size: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
+body {
+  font-family: var(--lex-font-text);
+  line-height: 1.6;
+  color: var(--lex-normal);
+  background: var(--lex-bg);
+  max-width: var(--lex-width-site);
+  margin: 0 auto;
+  padding: var(--lex-space-200) var(--lex-space-100) 4rem;
+}
+
+/* === Header === */
 header {
   margin-bottom: 3rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid #ddd;
+  padding-bottom: var(--lex-space-100);
+  border-bottom: var(--lex-border-thin) solid var(--lex-border);
 }
 
 header h1 {
+  font-family: var(--lex-font-headings);
   font-size: 2rem;
-  margin-bottom: 0.5rem;
+  font-weight: 700;
+  margin-bottom: var(--lex-space-050);
 }
 
+header p {
+  color: var(--lex-muted);
+  margin: 0;
+}
+
+/* === Navigation === */
 nav {
-  margin-top: 1rem;
+  margin-top: var(--lex-space-100);
 }
 
 nav a {
-  margin-right: 1.5rem;
-  color: #0366d6;
+  margin-right: var(--lex-space-150);
+  color: var(--lex-link);
   text-decoration: none;
   font-weight: 500;
 }
@@ -44,63 +72,75 @@ nav a:focus {
   text-decoration: underline;
 }
 
+/* === Main Content Area === */
 main {
   margin-bottom: 3rem;
 }
 
+/* === Markdown Content (non-lex) === */
 main > h1,
 main > h2,
 main > h3,
-main > h4 {
-  margin-top: 2rem;
-  margin-bottom: 1rem;
+main > h4,
+main > h5,
+main > h6 {
+  font-family: var(--lex-font-headings);
+  font-weight: 700;
+  margin-top: var(--lex-space-200);
+  margin-bottom: var(--lex-space-100);
 }
 
-p {
-  margin-bottom: 1rem;
+main > h1:first-child,
+main > h2:first-child,
+main > h3:first-child {
+  margin-top: 0;
 }
 
-code {
-  background: #f6f8fa;
+main > p {
+  margin-bottom: var(--lex-space-100);
+}
+
+main > ul,
+main > ol {
+  margin-left: var(--lex-space-200);
+  margin-bottom: var(--lex-space-100);
+}
+
+main > blockquote {
+  margin: var(--lex-space-100) 0;
+  padding-left: var(--lex-space-100);
+  border-left: 4px solid var(--lex-border);
+  color: var(--lex-muted);
+}
+
+/* Inline code in markdown */
+main code {
+  background: var(--lex-code-bg);
   padding: 0.2em 0.4em;
-  border-radius: 3px;
-  font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+  border-radius: var(--lex-radius-sm);
+  font-family: var(--lex-font-verbatim);
+  font-size: 0.9em;
 }
 
-pre {
-  background: #f6f8fa;
-  padding: 1rem;
-  border-radius: 6px;
+/* Code blocks in markdown */
+main pre {
+  background: var(--lex-code-bg);
+  padding: var(--lex-space-100);
+  border-radius: var(--lex-radius-md);
   overflow-x: auto;
-  margin: 1rem 0;
+  margin: var(--lex-space-100) 0;
 }
 
-pre code {
+main pre code {
   background: none;
   padding: 0;
 }
 
-blockquote {
-  margin: 1rem 0;
-  padding-left: 1rem;
-  border-left: 4px solid #ddd;
-  color: #666;
-}
-
-ul,
-ol {
-  margin-left: 2rem;
-  margin-bottom: 1rem;
-}
-
+/* === Footer === */
 footer {
   margin-top: 3rem;
-  padding-top: 1rem;
-  border-top: 1px solid #ddd;
-  color: #666;
+  padding-top: var(--lex-space-100);
+  border-top: var(--lex-border-thin) solid var(--lex-border);
+  color: var(--lex-muted);
   font-size: 0.9rem;
-}
-
-main .lex-document {
-  font-family: 'Source Sans 3', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
 }
