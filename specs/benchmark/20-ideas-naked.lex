@@ -100,13 +100,13 @@ Ideas, Naked
 
                 alert("Look Ma, no Lex");
 
-            :: javascript 
+            :: javascript ::
 
             Many times this is, as above a piece of text that is formatted in a formal language, like a computer programming language, but at its core it signals that Lex won't process that content. Tools can choose to (as in syntax highlighting code or inlining images), as they please.
 
             The Tower of Babel: 
                 With its epic proportions the tower of Babel is, although a gloomy one, a unequivocal recognition that human communication takes all sorts of forms.
-            :: image  ref=towerofbabel.jpg
+            :: image ref=towerofbabel.jpg ::
 
 
         3.3.5. Annotations

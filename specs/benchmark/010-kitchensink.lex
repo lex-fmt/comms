@@ -52,7 +52,7 @@ Kitchensink Test Document {{paragraph}}
       function example() {
       return "lex";
       }
-    :: javascript
+    :: javascript ::
 
 
   2. Second Root Session {{session}}
@@ -62,7 +62,7 @@ Kitchensink Test Document {{paragraph}}
     This session tests annotations with block content and marker-style verbatim blocks. {{paragraph}}
 
     Image Reference (Marker Verbatim Block):
-    :: image src="logo.png" alt="Lex Logo"
+    :: image src="logo.png" alt="Lex Logo" ::
 
 Final paragraph at the end of the document. {{paragraph}}
 
