@@ -29,6 +29,22 @@ Value Syntax
 	Quoted: any text (allows spaces, special chars)
 		Examples: "Hello World", "value with, comma"
 
+	Escaping in Quoted Values
+
+		Within quoted values, two escape sequences are recognized:
+			\" — literal quote character
+			\\ — literal backslash
+
+		Other backslashes are literal (no special meaning).
+
+		Examples:
+			message="say \"hello\""     (value: say "hello")
+			path="C:\\Users\\name"      (value: C:\Users\name)
+			note="backslash: \\"        (value: backslash: \)
+			raw="hello\nworld"          (value: hello\nworld — \n is NOT an escape)
+
+		Unquoted values have no escaping (restricted character set makes it unnecessary).
+
 Parsing
 
 	Parameters are parsed within the bounded region between :: markers.

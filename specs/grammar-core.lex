@@ -141,7 +141,8 @@ Grammar for lex
             <digit> = [0-9]
 
         2.2.6. Quoted and Unquoted Values
-            <quoted-string> = '"' <text-char>* '"'
+            <quoted-char> = '\"' | '\\' | <text-char>  (\" and \\ are escape sequences)
+            <quoted-string> = '"' <quoted-char>* '"'
             <unquoted-value> = (<letter> | <digit> | <dash> | <period>)+
 
         Token Locations
