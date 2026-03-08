@@ -5910,7 +5910,7 @@ sequence of bytes, which can be read in network byte order.
               repeat length-1 times:
                 v = (v << 8) + data.next_byte()
               return v
-        :: pseudocode
+        :: pseudocode ::
         For example, the eight-byte sequence 0xc2197c5eff14e88c decodes to the decimal
 value 151,288,809,941,952,652; the four-byte sequence 0x9d7f3e7d decodes to
 494,878,333; the two-byte sequence 0x7bbd decodes to 15,293; and the single byte
@@ -5941,7 +5941,7 @@ an appropriate size for packet number encodings.
               // Encode the integer value and truncate to
               // the num_bytes least significant bytes.
               return encode(full_pn, num_bytes)
-        :: pseudocode
+        :: pseudocode ::
         For example, if an endpoint has received an acknowledgment for packet 0xabe8b3
 and is sending a packet with a number of 0xac5c02, there are 29,519 (0x734f)
 outstanding packet numbers.  In order to represent at least twice this range
@@ -5984,7 +5984,7 @@ packet numbers after header protection has been removed.
                   candidate_pn >= pn_win:
                   return candidate_pn - pn_win
                return candidate_pn
-        :: pseudocode
+        :: pseudocode ::
         For example, if the highest successfully authenticated packet had a packet
 number of 0xa82f30ea, then a packet containing a 16-bit value of 0x9b32 will be
 decoded as 0xa82f9b32.

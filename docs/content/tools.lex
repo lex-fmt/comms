@@ -12,8 +12,7 @@ Tools
         cd tools
         cargo build --release
         # Binary at target/release/lex
-    :: shell
-
+    :: shell ::
 3. Commands
 
     3.1. Convert
@@ -34,8 +33,7 @@ Tools
             
             # Explicit convert subcommand
             lex convert document.lex --to html
-        :: shell
-
+        :: shell ::
         The source format is auto-detected from the extension. Override with `--from` when needed.
 
     3.2. Format
@@ -47,8 +45,7 @@ Tools
             
             # Redirect to a file
             lex format document.lex > formatted.lex
-        :: shell
-
+        :: shell ::
     3.3. Inspect
 
         Explore intermediate representations—ideal for debugging the language pipeline.
@@ -67,8 +64,7 @@ Tools
             
             # Show all AST properties
             lex inspect document.lex --extra-ast-full
-        :: shell
-
+        :: shell ::
         Available transforms:
             - ast-treeviz
             - ast-tag
@@ -87,8 +83,7 @@ Tools
             
             # Show all ancestors
             lex element-at document.lex 10 5 --all
-        :: shell
-
+        :: shell ::
 4. Supported Formats
 
     Definition:
@@ -109,8 +104,7 @@ Tools
     The CLI reads `lex.toml`. Override the path with `--config`.
 
         lex document.lex --to html --config ./my-lex.toml
-    :: shell
-
+    :: shell ::
     Definition:
         Format-specific options:
             Use `--extra-<name>` to pass renderer parameters.
@@ -123,8 +117,7 @@ Tools
             
             # Inspect with full AST properties
             lex inspect document.lex --extra-ast-full
-        :: shell
-
+        :: shell ::
     Example `lex.toml`:
 
         [formatting.rules]
@@ -157,8 +150,7 @@ Tools
         
         // Serialize to HTML
         let html = registry.serialize(&doc, "html")?;
-    :: rust
-
+    :: rust ::
     Architecture summary:
         - IR layer: format-agnostic events
         - Common layer: flat↔nested transformations

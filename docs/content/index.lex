@@ -46,8 +46,7 @@ Home
     CLI Workflow:
         lex generate-lex-css > docs/assets/css/lex-content.css
         lex docs/_lex_src/pages/index.lex --to html --extras-css-path docs/assets/css/lex-content.css -o index.html
-    :: shell
-
+    :: shell ::
 4. Key Elements
 
     Definition:

@@ -44,8 +44,7 @@ About
                 function hello() {
                     return "world";
                 }
-            :: javascript
-
+            :: javascript ::
         Annotation:
             :: note :: This is a single-line annotation.
             

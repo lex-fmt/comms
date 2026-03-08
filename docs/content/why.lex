@@ -67,8 +67,7 @@ Why lex?
                     blocks = group_blocks(tokens)
                     ast = resolve_types(blocks)
                     return process_inlines(ast)
-            :: python
-
+            :: python ::
             This clear, readable structure makes lex a superior authoring format for everything from technical specifications to academic papers.
 
 4. A Manifesto for Your Ideas

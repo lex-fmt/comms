@@ -31,8 +31,7 @@ Document Title
         function hello() {
             return "world";
         }
-    :: javascript
-
+    :: javascript ::
 2. Second Section
 
     :: note :: Annotations attach metadata to content.
@@ -141,8 +140,7 @@ Content that should not be parsed as lex.
 Code Block:
     console.log("Hello, world!");
     const x = 42;
-:: javascript
-
+:: javascript ::
 Image Reference:
 :: image src="diagram.png" alt="Architecture diagram"
 ```
