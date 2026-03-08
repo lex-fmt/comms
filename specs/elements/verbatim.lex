@@ -12,12 +12,12 @@ Syntax
 		Subject:
 		    raw content here
 		    preserves all formatting
-		:: label params
+		:: label params ::
 
 	Marker form (no content, typically for binary references):
 		Subject:
 		    optional caption text now lives inside the block
-		:: label params
+		:: label params ::
 
 	Note: Optional blank line after subject is allowed in both forms.
 
@@ -29,7 +29,7 @@ Verbatim Groups
 	Syntax:
 		(<subject-line>:
 		    <content lines>)+
-		:: label params
+		:: label params ::
 
 		- Each subject anchors to the indentation wall established by the first subject.
 		- Content for every pair must be indented past the wall and preserves blank lines.
@@ -91,17 +91,17 @@ Content Preservation
 		    
 		    function() { return "::"; }  // :: not treated as marker
 		:: javascript ::
-Closing Data
+Closing Annotation
 
-	The closing data node:
+	The closing annotation:
 		- Must be at same indentation level as subject (at the wall)
-		- Contains the label plus optional parameters (no trailing :: marker)
+		- Contains the label plus optional parameters, with trailing :: marker
 		- Signals end of the verbatim block
 
 	Examples:
-		:: javascript caption="Hello World"
-		:: python version=3.11
-		:: image src=photo.jpg
+		:: javascript caption="Hello World" ::
+		:: python version=3.11 ::
+		:: image src=photo.jpg ::
 
 Examples
 
@@ -114,13 +114,13 @@ Examples
 	Marker form for images:
 		Sunset Photo:
 		    As the sun sets over the ocean.
-		:: image type=jpg, src=sunset.jpg
+		:: image type=jpg, src=sunset.jpg ::
 
 	With parameters and caption:
 		API Response:
 		    {"status": "ok", "data": [...]}
 		    Example API response from /users endpoint
-		:: json format=pretty
+		:: json format=pretty ::
 
 Use Cases
 

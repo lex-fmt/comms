@@ -105,7 +105,7 @@ Ideas, Naked
 
             The Tower of Babel: 
                 With its epic proportions the tower of Babel is, although a gloomy one, a unequivocal recognition that human communication takes all sorts of forms.
-            :: image  ref=towerofbabel.jpg
+            :: image  ref=towerofbabel.jpg ::
 
 
         3.3.5. Annotations
