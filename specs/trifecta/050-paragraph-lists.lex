@@ -9,6 +9,7 @@ Single item with number (illegal list, becomes paragraph): {{paragraph}}
 1. This is also not a list {{paragraph}}
 
 Lists require at least two items: {{paragraph}}
+
 - First item {{list-item}}
 - Second item {{list-item}}
 
@@ -37,6 +38,7 @@ Proper list with blank lines around it: {{paragraph}}
 Paragraph after proper list. {{paragraph}}
 
 Valid mixed decoration list: {{paragraph}}
+
 - First item {{list-item}}
 1. Second item {{list-item}}
 a. Third item {{list-item}}

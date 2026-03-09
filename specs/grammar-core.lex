@@ -185,27 +185,30 @@ Grammar for lex
     Content cannot include sessions or nested annotations.
 
     <list> = <blank-line> <list-item-line>{2,*}
+    <list-in-container> = <list-item-line>{2,*}
 
-    Note: Lists require a preceding blank line for disambiguation. This means:
-    - A list must start after a blank line (or at document start)
+    Note: Lists require a preceding blank line for disambiguation at root level. This means:
+    - At root level, a list must start after a blank line (or at document start)
+    - Inside containers (sessions, definitions), lists do NOT require a preceding blank line
     - Blank lines between list items are NOT allowed (would terminate the list)
     - Single list-item-lines become paragraphs (not lists)
 
     <definition> = <subject-line> <indent> <definition-content>
-    <definition-content> = (<paragraph> | <list>)+
+    <definition-content> = (<paragraph> | <list> | <definition> | <verbatim-block> | <annotation>)+
 
-    Note: Definitions differ from sessions in two key ways:
+    Note: Definitions differ from sessions in one key way:
     - NO blank line between subject and content (immediate indent)
-    - Content cannot include sessions (only paragraphs and lists)
+    - Content cannot include sessions (everything else is allowed)
     - Subject line must end with a colon (:)
+    - Content CAN include nested definitions (recursive), verbatim blocks, and annotations
 
     <session> = <session-title-line> <blank-line> <indent> <session-content>
-    <session-content> = (<paragraph> | <list> | <session>)+
+    <session-content> = (<paragraph> | <list> | <session> | <definition> | <verbatim-block> | <annotation>)+
 
     Notes on separators and ownership:
     - A blank line between the title and the indented content is REQUIRED (disambiguates from definitions).
     - A session may start at document/container start, after a blank-line group, or immediately after a just-closed child (a boundary). Blank lines stay in the container where they appear; dedent boundaries also act as separators for starting the next session sibling.
-    - Content can include nested sessions, definitions, lists, and paragraphs.
+    - Content can include nested sessions, definitions, verbatim blocks, annotations, lists, and paragraphs.
 
     <verbatim-block> = <subject-line> <blank-line>? <verbatim-content>? <closing-annotation>
     <subject-line> = <text-span>+ <colon> <line-break>
@@ -226,7 +229,7 @@ Grammar for lex
     <metadata> = (document metadata, non-content information)
     <content> = (<verbatim-block> | <annotation> | <paragraph> | <list> | <definition> | <session>)*
 
-    Parse order: <verbatim-block> | <annotation> | <list> | <definition> | <session> | <paragraph>
+    Parse order: <verbatim-block> | <annotation> | <list-in-container>? | <list> | <definition> | <session> | <paragraph>
 
 4. Implementation Notes: Differences from Formal Specification
 
@@ -248,65 +251,55 @@ Grammar for lex
 
     4.2. List Elements
 
-        Specification compliance: FULL with clarification
+        Specification compliance: FULL
 
-        Implementation detail: While the grammar shows `<blank-line> <list-item-line>{2,*}`,
-        the blank line requirement is enforced but could be clearer. A list MUST:
-        - Be preceded by a blank line (or start at document beginning)
-        - Contain at least 2 list items
-        - NOT contain blank lines between items (would terminate the list)
+        List rules:
+        - At root level: preceded by a blank line (or at document start)
+        - Inside containers (sessions, definitions): no preceding blank line required
+        - Must contain at least 2 list items
+        - Blank lines between items terminate the list
 
         Marker support: All marker types are supported:
         - Plain: - (dash with space)
         - Ordered: 1. or 1) (number with period or paren)
         - Letter: a. or a) (single letter with period or paren)
         - Roman: I. or I) (Roman numerals with period or paren)
+        - Double-paren: (1) or (a) (number/letter with double parentheses)
 
         Single items: A single list-item-line (without blank line prefix) becomes a paragraph,
         not a list. This correctly implements "Single list-item-lines become paragraphs".
 
     4.3. Definition Elements
 
-        Specification has incomplete description.
+        Specification compliance: FULL
 
-        What the spec says:
-        - <definition-content> = (<paragraph> | <list>)+
-        - NO blank line between subject and content
+        Content types: definitions can contain paragraphs, lists, nested definitions
+        (recursive), verbatim blocks, and annotations. The only restriction is that
+        definitions cannot contain sessions (enforced at both parser and AST level).
 
-        What the implementation actually does:
-        - Content can include NESTED DEFINITIONS (not mentioned in spec)
-        - This is a recursive capability: definitions can contain other definitions
-        - Example valid structure: Definition > List > Definition > Paragraph
-
-        This is a significant extension not documented in the formal grammar.
-        The intent appears to support hierarchical outline structures.
+        Nested definitions support hierarchical outline structures:
+        - Definition > List > Definition > Paragraph is valid
+        - Definition > Session is NOT valid
 
     4.4. Session Elements
 
         Specification compliance: FULL
 
-        Key distinction from definitions (correctly specified):
+        Key distinction from definitions:
         - Sessions REQUIRE a blank line after the title (definitions don't)
         - Sessions CAN contain nested sessions (definitions cannot)
-        - Sessions can contain paragraphs, lists, definitions, and other sessions
+        - Sessions can contain paragraphs, lists, definitions, verbatim blocks, annotations, and other sessions
 
         Title flexibility: Any text can be a session title (it's just <text-line> or <subject-line>).
         The presence of a blank line after determines if it's a session vs a definition.
 
     4.5. Verbatim Block Elements
 
-        Specification compliance: MOSTLY - with one clarification
+        Specification compliance: FULL
 
-        What the spec says:
-        - Two forms: block form (with indented content) and marker form (no content)
-        - Closing data is listed as <closing-data> (reusable data node syntax)
-
-        What implementation clarifies:
-        - Closing data MUST be present (not optional)
-        - Descriptive text belongs inside the block content, not after the closing data line
-        - Content is NOT parsed (preserves raw whitespace/formatting exactly)
-
-        Indentation Wall rule: Correctly enforced - content must be indented deeper than subject.
+        Closing annotation MUST be present (not optional).
+        Content is NOT parsed (preserves raw whitespace/formatting exactly).
+        Indentation Wall rule: correctly enforced — content must be indented deeper than subject.
 
     4.6. Paragraph Elements
 
@@ -327,15 +320,20 @@ Grammar for lex
     4.7. Parsing Precedence Order
 
         The parser attempts matches in this order:
-        1. verbatim-block (requires closing annotation - must try first for disambiguation)
-        2. annotation (single-line annotations with ::)
-        3. list (requires preceding blank line)
-        4. definition (requires subject + immediate indent)
-        5. session (requires subject + blank line + indent)
-        6. paragraph (fallback - catches everything else)
+        1. verbatim-block (imperative match — requires closing annotation, tried first)
+        2. annotation-block-with-end (block annotation with explicit closing ::)
+        3. annotation-block (block annotation without closing marker)
+        4. annotation-single (single-line annotation)
+        5. list-no-blank (inside containers only — 2+ items, no preceding blank required)
+        6. list (at root — requires preceding blank line + 2+ items)
+        7. definition (requires subject + immediate indent, no blank line)
+        8. session (requires subject + blank line(s) + indent)
+        9. paragraph (fallback — catches everything else)
+        10. blank-line-group (one or more consecutive blank lines)
 
         This order is CRITICAL for correct parsing because:
-        - Verbatim blocks are unique (only elements with closing annotation)
-        - Lists are distinguished by blank line + multiple items
+        - Verbatim blocks are the only elements with closing annotations
+        - Annotations must be tried before lists (both can start at line beginning)
+        - Lists inside containers don't need a blank line; root lists do
         - Definitions vs sessions are distinguished by blank line presence
         - Paragraphs catch any remaining lines
