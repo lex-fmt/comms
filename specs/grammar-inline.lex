@@ -200,8 +200,8 @@ Inline Token Grammar for lex
 
 		A start marker is valid when:
 		- Previous character is not alphanumeric (or is at start of text)
-		- Next character exists and is alphanumeric (for non-reference types)
-		- For references: next character must exist (can be any character)
+		- For non-literal types (strong, emphasis): next character must be alphanumeric
+		- For literal types (code, math, reference): next character must be non-whitespace
 
 		Invalid starts:
 			word*text*      (previous char is alphanumeric)
@@ -229,6 +229,8 @@ Inline Token Grammar for lex
 
 5. Escape Sequences
 
+	See also [./elements/escaping.lex] for the full escaping specification.
+
 	5.1. Escaping Inline Markers
 
 		Use backslash (\) to escape inline markers:
@@ -241,11 +243,24 @@ Inline Token Grammar for lex
 
 		- Before non-alphanumeric: escapes the character (backslash is removed)
 		- Before alphanumeric: backslash is preserved (for paths like C:\Users)
+		- Trailing backslash at end of input: preserved as literal text
 
 		Examples:
 			\*text\*               → *text*
 			C:\Users\name          → C:\Users\name (backslashes preserved)
 			C:\\Users\\name        → C:\Users\name (double backslash = single)
+
+	5.3. Literal Context Exemption
+
+		Inside literal inline elements (code, math, reference), escape processing
+		does NOT apply. Backslashes are preserved verbatim:
+
+		Examples:
+			`\*text\*`             → Code("\*text\*")
+			#\alpha + \beta#       → Math("\alpha + \beta")
+
+		This ensures code spans and math notation work naturally without
+		requiring double-escaping of backslashes.
 
 6. Implementation Notes
 
