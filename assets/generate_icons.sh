@@ -89,6 +89,11 @@ generate_icon 1024 "logo@0.5x.png"      # 1024x1024
 # Standard logo
 generate_icon 128 "logo.png"            # Default logo size
 
+# Full-size logo for splash screens (high-quality, no sharpening)
+echo "Generating $OUTPUT_DIR/logo-full.png (1024x1024, high-quality)..."
+rsvg-convert -w 2048 -h 2048 "$SVG_SOURCE" | \
+magick - -resize 1024x1024 -quality 100 "$OUTPUT_DIR/logo-full.png"
+
 echo "============================================"
 echo "Icon generation complete!"
 echo "All PNG files have been generated in $OUTPUT_DIR/"
