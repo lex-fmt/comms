@@ -77,7 +77,7 @@ npx vsce package
 | **Lex: Export to Markdown** | Convert active .lex to Markdown |
 | **Lex: Export to HTML** | Convert active .lex to HTML |
 | **Lex: Export to PDF** | Convert active .lex to PDF (prompts for save location) |
-| **Lex: Import from Markdown** | Convert active .md to lex format |
+| **Lex: Convert to Lex** | Convert active .md to Lex format (prompts for save location) |
 | **Lex: Open Preview** | Live HTML preview in current column |
 | **Lex: Open Preview to the Side** | Live HTML preview side-by-side |
 
