@@ -10,8 +10,8 @@ Introduction
 
 	Confusing as it it, marking the first item with "2." does not make it second in the list. The first item is still the first item, and the second item is still the second item, regardless of the marker used.
 	Hence, the list markers are about visual formatting. Likewise, Lex does not error on non-sequential numbering or mixed marker styles within a list. The first item's marker style sets the semantic type of the list, but subsequent items can use different markers without affecting the list's structure.
-	The style should be consistent for items in the same list  / level, but can change across different levels of nesting. There fore the style is actually a property of the list , not the items.
-	Tools (formmaters, renderers) can fix ordering and consistency issues, but Lex does not enforces them.
+	The style should be consistent for items in the same list / level, but can change across different levels of nesting. Therefore the style is actually a property of the list, not the items.
+	Tools (formatters, renderers) can fix ordering and consistency issues, but Lex does not enforce them.
 
 Syntax
 
@@ -60,26 +60,36 @@ Mixing Markers
 		a. Third item
 		- Fourth item
 
-Compact and Extended Marker forsm
+Short and Extended Marker Forms
 
-	Since lists can be nested, markers can reference the current item at the current level, or the absolute one (that is, all of it's list ancestors).
-	For example: 
+	List markers come in two forms: short and extended.
 
-	1. First item (absolute: 1.)
-	2. Second item (absolute: 2.)
-		2.1. Nested first item 
+	Short form markers reference only the current item at the current level:
+
+	1. First item
+	2. Second item
+		a. Nested first item
+		b. Nested second item
+
+	Extended form markers encode the full hierarchical path, including all ancestor indices:
+
+	1. First item
+	2. Second item
+		2.1. Nested first item
 		2.2. Nested second item
 			2.2.1. Nested nested item
 
-	The extended form can change different decoration styles per level, as the commmon practise: 
+	The extended form can use different decoration styles per level, as is common practice:
 
-	1. First item (absolute: 1.)
-		1.a. Second item (absolute: 1.a)
-			1.a.i. Nested first item 
-			1.a.ii. Nested second item
-		1.b Second item in the same level (absolute: 1.b)
+	1. First item
+		1.a. Nested first item
+			1.a.i. Deep nested first item
+			1.a.ii. Deep nested second item
+		1.b. Nested second item
 
-	If a first item is set to extended form, it's list and inner lists will also use the extended form (the root level is too shallow to distinguish the intention of extended vs compact, forms, hence this must happen on the second child level or deeper.
+	Propagation rule:
+	The form is determined by the first item of a nested list (at the second level or deeper, since the root level is too shallow to distinguish short from extended). If a nested list's first item uses extended form, that list and all its inner lists also use extended form.
+	When normalization is enabled, formatters rebuild extended markers from the actual list hierarchy, ensuring correct numbering and consistent style at each level.
 
 Blank Line Rule
 
