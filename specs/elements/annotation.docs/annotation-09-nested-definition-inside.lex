@@ -8,4 +8,3 @@
         Representational State Transfer.
 
     Final notes about the documentation.
-::

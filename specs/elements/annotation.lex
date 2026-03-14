@@ -10,7 +10,7 @@ Introduction
 	Core features:
 
 	- Annotations embed a data node: :: <label> <parameters>? (no closing ::)
-	- After the data node, annotations add a closing :: marker and optional content
+	- After the data node, annotations add a closing :: marker and optional inline content
 	- Labels [./label.lex] remain mandatory; parameters [./parameter.lex] are optional augmentations
 	- Annotations have optional content: which can be the single line shortcut or the regular content conatainer form, which allows all elements but sessions to be part (including nesting). While not prohibited, annotations should not contain other annotations as their content as the semantic meaning would be ... why bother?
 
@@ -30,10 +30,9 @@ Syntax Forms:
 		:: label :: text content here
 		:: label params :: text content here
 
-	Block form (indented content - note TWO closing :: markers):
+	Block form (indented content, dedent closes the block):
 		:: label ::
 		    indented paragraph or list
-		:: Content ::
 	Can be empty (marker form - the label itself carries meaning)
 	Forms:
 	- Inline text (single-line form)

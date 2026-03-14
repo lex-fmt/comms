@@ -174,12 +174,12 @@ Grammar for lex
     <value> = <quoted-string> | <unquoted-value>
     <annotation-tail> = <single-line-content> | <block-content>
     <single-line-content> = <whitespace> <text-line>
-    <block-content> = <line-break> <indent> (<paragraph> | <list>)+ <dedent> <annotation-marker>
+    <block-content> = <line-break> <indent> (<paragraph> | <list>)+ <dedent>
 
     Note: Annotations have multiple forms:
     - Marker form: :: label :: (no content, no tail)
     - Single-line form: :: label :: inline text (text is the tail)
-    - Block form: :: label :: \n <indent>content<dedent> :: (note TWO closing :: markers)
+    - Block form: :: label :: \n <indent>content<dedent> (dedent closes the block)
     - Combined: :: label params :: inline text
     Labels are mandatory; parameters are optional.
     Content cannot include sessions or nested annotations.
@@ -242,7 +242,7 @@ Grammar for lex
         All four annotation forms are correctly implemented:
         - Marker form: :: label :: (empty, no content)
         - Single-line form: :: label :: inline text
-        - Block form: :: label :: <newline> <indent>content<dedent> ::
+        - Block form: :: label :: <newline> <indent>content<dedent>
         - Combined form with parameters still requires labels
 
         Clarification: Earlier revisions allowed parameter-only annotations; the grammar now factors the shared :: label params? portion into <data> so other elements can embed the same payload while keeping labels mandatory.
@@ -321,15 +321,14 @@ Grammar for lex
 
         The parser attempts matches in this order:
         1. verbatim-block (imperative match — requires closing annotation, tried first)
-        2. annotation-block-with-end (block annotation with explicit closing ::)
-        3. annotation-block (block annotation without closing marker)
-        4. annotation-single (single-line annotation)
-        5. list-no-blank (inside containers only — 2+ items, no preceding blank required)
-        6. list (at root — requires preceding blank line + 2+ items)
-        7. definition (requires subject + immediate indent, no blank line)
-        8. session (requires subject + blank line(s) + indent)
-        9. paragraph (fallback — catches everything else)
-        10. blank-line-group (one or more consecutive blank lines)
+        2. annotation-block (block annotation with indented content)
+        3. annotation-single (single-line annotation)
+        4. list-no-blank (inside containers only — 2+ items, no preceding blank required)
+        5. list (at root — requires preceding blank line + 2+ items)
+        6. definition (requires subject + immediate indent, no blank line)
+        7. session (requires subject + blank line(s) + indent)
+        8. paragraph (fallback — catches everything else)
+        9. blank-line-group (one or more consecutive blank lines)
 
         This order is CRITICAL for correct parsing because:
         - Verbatim blocks are the only elements with closing annotations

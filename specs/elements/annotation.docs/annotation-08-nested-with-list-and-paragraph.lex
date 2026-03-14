@@ -6,4 +6,3 @@
     - Third item
 
     A paragraph after the list.
-::

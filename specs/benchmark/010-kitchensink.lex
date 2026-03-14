@@ -60,7 +60,6 @@ This is a marker annotation at the root level, attached to the definition above.
 
         - Task 1 to complete. {{list-item}}
         - Task 2 to complete. {{list-item}}
-    ::
 
     Image Reference (Marker Verbatim Block):
     :: image src="logo.png" alt="Lex Logo" ::

@@ -34,13 +34,7 @@ Line Token Grammar for lex
         container where they appear; they are not hoisted across indentation
         boundaries.
 
-    3.2. <annotation-end-line>
-
-        <annotation-end-line> = <indent>? <lex-marker> <whitespace>* <line-break>
-        Contains only the :: marker (plus optional whitespace). Used to close
-        annotation and verbatim blocks.
-
-    3.3. <annotation-start-line>
+    3.2. <annotation-start-line>
 
         <annotation-start-line> =
             <indent>? <lex-marker> <whitespace>
@@ -50,38 +44,38 @@ Line Token Grammar for lex
         Follows the same <data> grammar as annotations. Tail content after the
         closing marker stays inline.
 
-    3.4. <data-line>
+    3.3. <data-line>
 
         <data-line> = <indent>? <lex-marker> <whitespace>
             <label> (<whitespace> <parameters>)? <whitespace>* <line-break>
         Similar to <annotation-start-line> but without a trailing :: marker.
         Used for metadata headers where the payload stops after the label block.
 
-    3.5. <subject-or-list-item-line>
+    3.4. <subject-or-list-item-line>
 
         <subject-or-list-item-line> =
             <indent>? <list-marker> <whitespace> <text-span>+ <colon> <line-break>
         Starts with a list marker and ends with a colon. Parser decides whether it
         behaves like a subject or a list entry based on surrounding context.
 
-    3.6. <list-line>
+    3.5. <list-line>
 
         <list-line> = <indent>? <list-marker> <whitespace> <text-span>+ <line-break>
         Covers bullet/ordered markers (dash, numbers with period/paren, single
         letters, Roman numerals). Does not end with a colon.
 
-    3.7. <subject-line>
+    3.6. <subject-line>
 
         <subject-line> = <indent>? <text-span>+ <colon> <line-break>
         Any line whose last non-whitespace token is a colon and that was not
         claimed by the previous rules.
 
-    3.8. <paragraph-line>
+    3.7. <paragraph-line>
 
         <paragraph-line> = <indent>? <text-span>+ <line-break>
         Fallback for non-blank lines that do not match the specialised patterns.
 
-    3.9. <dialog-line>
+    3.8. <dialog-line>
 
         Dialog detection runs after the initial classification:
         - Trigger: a <list-line> whose last two non-whitespace tokens are both
@@ -95,13 +89,12 @@ Line Token Grammar for lex
 
     The classifier evaluates the predicates in this sequence:
         1. <blank-line>
-        2. <annotation-end-line>
-        3. <annotation-start-line>
-        4. <data-line>
-        5. <subject-or-list-item-line>
-        6. <list-line>
-        7. <subject-line>
-        8. <paragraph-line>
+        2. <annotation-start-line>
+        3. <data-line>
+        4. <subject-or-list-item-line>
+        5. <list-line>
+        6. <subject-line>
+        7. <paragraph-line>
 
     Structural tokens (<indent>, <dedent>) are emitted directly by the grouping
     pass and bypass the ordered checks above. <dialog-line> is a mutation step on
@@ -112,8 +105,8 @@ Line Token Grammar for lex
     These aliases help parser combinators express higher-level expectations:
 
         <blank-line-group> = (<blank-line>)+
-        <annotation-line> = <annotation-start-line> | <annotation-end-line>
-        <content-line> = any classified line excluding annotation-start/end
+        <annotation-line> = <annotation-start-line>
+        <content-line> = any classified line excluding annotation-start
         <any-line> = any non-blank line
         <all-line> = any line, including structural tokens
 
