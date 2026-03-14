@@ -64,7 +64,6 @@ This document demonstrates all semantic token types emitted by lex-lsp and serve
         :: note :: Annotation labels and parameters are faint.
             Annotation content is also faint. This entire block
             should be visually subdued compared to main content.
-        ::
 
         Verbatim block metadata is faint:
             # This content is normal intensity

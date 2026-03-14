@@ -9,7 +9,6 @@
 
     :: callout ::
         Session-level annotation body.
-    ::
 
     - Bullet item referencing [1]
     - Nested bullet
