@@ -223,7 +223,6 @@ A Gentle Introduction to Lex
 
         - Be civil when engaging in discussions, community trumps correctness.
         - Be open to changing your mind, the world is complex and we are all fallible.
-    ::
 
     9.1 Annotation Attachment
 
@@ -233,7 +232,6 @@ A Gentle Introduction to Lex
 
         :: note ::
             This is a note about the list that follows.
-        ::
 
         - Blank lines between annotation and target are optional.
         - Multiple annotations are supported for the same target.
