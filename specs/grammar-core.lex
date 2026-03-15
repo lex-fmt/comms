@@ -246,9 +246,20 @@ Grammar for lex
     - Before a subject-line followed by an indent (yields to definition)
     This enables optional blank lines between paragraphs and lists/definitions.
 
-    <document> = <metadata>? <content>
+    <document> = <metadata>? <document-title>? <content>
     <metadata> = (document metadata, non-content information)
+    <document-title> = <title-line> <subtitle-line>? <blank-line>
+    <title-line> = <text-span> <colon>? <line-break>
+    <subtitle-line> = <text-span> <line-break>
     <content> = (<verbatim-block> | <table> | <annotation> | <paragraph> | <list> | <definition> | <session>)*
+
+    Note: A document title is the first non-annotation line, followed by a blank line,
+    with no indented content after the blank (which would make it a session).
+    When the title line ends with a colon and a second non-blank, non-indented line
+    follows before the blank separator, the second line is parsed as a subtitle.
+    The trailing colon is structural (stripped from title content).
+    A trailing colon followed directly by a blank line (no subtitle line) remains
+    part of the title content.
 
     Parse order: <verbatim-block>/<table> | <annotation> | <list> | <definition> | <session> | <paragraph>
 

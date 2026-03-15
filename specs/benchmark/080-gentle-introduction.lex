@@ -1,59 +1,66 @@
-A Gentle Introduction to Lex
+A Gentle Introduction to Lex:
+A Plain Text Format for Ideas
 
     Lex is a plain text format for ideas, that can grow with them from a quick note all the way up to a complex technical document, to say a scientific paper. It's designed to be very easy to read and write, by using many text formatting practices we use daily, while still giving you powerful features for complicated and structured ideas.
 
-1. Structure: Sessions
+1. Document Titles
+
+    Every Lex document can start with a title: the very first line, followed by a blank line. Titles can optionally include a subtitle, by ending the title line with a colon and placing the subtitle on the next line, like this document does: "A Gentle Introduction to Lex" is the title and "A Plain Text Format for Ideas" is its subtitle.
+
+    Subtitles are common in books, papers and technical documents. In Lex they are a first-class part of the document title, not a separate element. The colon signals that the next line completes the title, in the same way it signals a definition's subject or a verbatim block's subject elsewhere in the format.
+
+2. Structure: Sessions
 
     We start with parts, that is sessions. You can structure your ideas over sessions, keeping a more manageable structure, that is easier to navigate and refer to.
 
     Sessions are defined by a session title (like this one, "Structure" above) surrounded by blank lines, and after the latter, some content, which is indented, that is, a tab over there.
 
-    1.1 Subsessions, Nesting and Trees, oh My
+    2.1 Subsessions, Nesting and Trees, oh My
 
         Some sessions are best captured with their own sessions, that is, subsessions. In Lex, you control the structure: sessions can be as deep as you want them to (be kind to your readers, though), have many or few subsessions, as your idea calls for it.
 
-    1.2 Session Titles
+    2.2 Session Titles
 
         Session titles can be any piece of text, and they can be direct, or sequenced, that is, have some counter for their numbers. These sequence markers come in various styles.
 
-        1.2.a. Numbers
+        2.2.a. Numbers
 
             These are classic numbers like 3. or 4.
 
-        1.2.b. Letters
+        2.2.b. Letters
 
             These can use letters like a. or b).
 
-        1.2.c. Roman Numerals
+        2.2.c. Roman Numerals
 
             These can use roman numerals like iii. or vi.
 
-        1.2.d. Style Forms
+        2.2.d. Style Forms
 
-            These can be short (as in 3.) or extended, that is, containing the full sequence of markers including parent ones. This session, in that style, would be 1.2.d or d in compact form.
+            These can be short (as in 3.) or extended, that is, containing the full sequence of markers including parent ones. This session, in that style, would be 2.2.d or d in compact form.
 
-        1.2.e. Ordering
+        2.2.e. Ordering
 
             Sessions are ordered by their appearance in the document, not by the marker numbering. These are helpers for finding things, and they can be non-contiguous or even repeated, and Lex can order them for you automatically when you save your document.
 
-    1.3 Content
+    2.3 Content
 
         Sessions can have any content, including other sessions, as long as they have some. Since a session must have some content, at least the innermost one should have a non-session element, like a paragraph.
 
-2. Paragraphs
+3. Paragraphs
 
     So far, we've only seen sessions and paragraphs, the latter being exactly what you'd expect it to be, that is one or more lines of text.
     Blank lines split paragraphs, so this paragraph is two lines long.
 
     While this one is a single line paragraph.
 
-3. Intermezzo I: Simple Yet Powerful
+4. Intermezzo I: Simple Yet Powerful
 
     It's worth pausing a bit. We've only talked about sessions and paragraphs and it's worth noting a few points.
 
     Flexibility: ideas are wild little things, caging them into a very square box won't help them grow. And this is why Lex is very flexible, as long as it can give some structure, which helps nurture them too. That is why sessions are arbitrarily (that is: as much as you like) nestable, why they can have any content, why they can have sequence markers of various types and even no markers at all.
 
-    And this gives you addressability: that is, a way to refer (formally or not) to a part of a document, like [#1.2.c] taking you straight to Roman Numerals. Being able to address bits of an idea precisely is quite useful, and surprisingly lacking in alternative formats.
+    And this gives you addressability: that is, a way to refer (formally or not) to a part of a document, like [#2.2.c] taking you straight to Roman Numerals. Being able to address bits of an idea precisely is quite useful, and surprisingly lacking in alternative formats.
 
     It's also worth noting the format syntax: that is the rules of how to organize text to specify that X is a Title and Y is a paragraph. Lex strives for readability and ease of use, and minimizes syntax by using common sense things that most of us can understand without formal training. Like blanks separating sessions, tabs for inner content and blank lines splitting paragraphs. This is another principle you will find over and over in Lex.
 
@@ -62,7 +69,7 @@ A Gentle Introduction to Lex
     - Sessions: must happen within sessions, you don't want to have a session inside a list or a paragraph, as sessions are the spinal cord of the document.
     - Paragraphs can only contain lines of text.
 
-4. Lists
+5. Lists
 
     A collection of things is a common need in ideas, after all that's a good way to think about the world: your children is the list of your offspring, states in a country, items in a shopping list.
 
@@ -103,7 +110,7 @@ A Gentle Introduction to Lex
         - Joao Gilberto
         - Baden Powell
 
-5. Definitions
+6. Definitions
 
     Ideas are about defining things too, and important enough to warrant an element of their own. A definition is made up of the term being defined and its actual definition content.
 
@@ -112,7 +119,7 @@ A Gentle Introduction to Lex
 
         The definition content can have multiple paragraphs, lists, and even other definitions. Blank lines before definitions are optional, but there cannot be a blank line between the term and the value: that blank line would turn it into a session instead.
 
-6. Intermezzo II: Special Lex Syntax
+7. Intermezzo II: Special Lex Syntax
 
     We've mentioned before how Lex aims at simplicity and readability, and a big part of that is not introducing syntax elements, that is, characters that are really not part of the content, that feel different from how we'd normally write, that exist solely for the purpose of structuring the document.
 
@@ -122,7 +129,7 @@ A Gentle Introduction to Lex
 
     Hence it's used in verbatim blocks and annotations, the two element types that are not the content itself, but additional information about it.
 
-7. Verbatim
+8. Verbatim
 
     Awesome as it is, Lex is not the only useful format. There are plenty of content types that require other formats. Verbatim blocks are a way to include those, they say to Lex "This isn't Lex formatted, hands off".
 
@@ -141,7 +148,7 @@ A Gentle Introduction to Lex
     Parameters:
         Structured extra information, optional [1]. They are written as `key=value` pairs, separated by commas, and placed inside the Lex markers after the label. For example, in the image block below, we have a parameter "src" with the value "angorwat.jpg", which tells us where to find the image file.
 
-    7.1. Textual Content
+    8.1. Textual Content
 
         For textual content, things like programming code, math formulas and the like, the content can be embedded in the Lex document itself, as its content. Remember that a verbatim block's inner content, like a session's or definition's, is +1 indented.
 
@@ -162,7 +169,7 @@ A Gentle Introduction to Lex
 
         Though not really a part of Lex itself, most editors will correctly syntax highlight the content as long as the type in the label is of a known format.
 
-    7.2. Binary Content
+    8.2. Binary Content
 
         This includes things like images, videos, audio and any other such files. Lex, being a text format, can't display them.
         Hence, the binary form holds the subject (what is being included) and the type of data.
@@ -176,7 +183,7 @@ A Gentle Introduction to Lex
             This photo was taken on a Rollei Flex 2.8F, with Kodak Portra 400 film. The colors are stunning, and the details are incredible. I love how the light plays on the ancient stones, creating a magical atmosphere.
         :: image src="angkorwat.jpg" ::
 
-    7.3. Verbatim Groups
+    8.3. Verbatim Groups
 
         Multiple subject/content pairs can share a single closing annotation. This is handy for step-by-step shell transcripts or grouped code samples that use the same language.
 
@@ -188,13 +195,13 @@ A Gentle Introduction to Lex
 
         Each subject anchors to the indentation wall established by the first subject. Content for every pair must be indented past the wall.
 
-    7.4. Labels
+    8.4. Labels
 
         A label [2] is required, but it can be anything that you fancy. There are however, some guidelines that can be useful:
         - For textual formats, well known names like javascript, python, html et al give you syntax highlighting in editors and exports (Markdown, HTML, PDF) for free.
         - Image, video, audio and media are built-in types, so using those labels can give you better support in editors and exports as well.
 
-8. Tables
+9. Tables
 
     Tables are incredibly useful for organizing data in a structured way. In Lex, tables are a native element: their cells support all inline formatting (*bold*, _emphasis_, `code`, references), and the formatter can auto-align columns for you. A table has a caption (a subject line ending with a colon), pipe-delimited rows, and a closing annotation with the `table` label.
 
@@ -207,7 +214,7 @@ A Gentle Introduction to Lex
 
     By default, the first row is treated as a header. You can change this with the `header` parameter: `header=0` for no header, `header=2` for two header rows, and so on.
 
-    8.1 Alignment
+    9.1 Alignment
 
         Column alignment is specified via the `align` parameter, using one letter per column: `l` for left (the default), `c` for center, `r` for right.
 
@@ -218,7 +225,7 @@ A Gentle Introduction to Lex
             | Mingus Ah Um | 1959 | Charles Mingus |
         :: table align=lcl ::
 
-    8.2 Cell Merging
+    9.2 Cell Merging
 
         Cells can span multiple columns or rows using merge markers. A cell containing `>>` merges into its left neighbor (column span), while `^^` merges into the cell above it (row span).
 
@@ -231,7 +238,7 @@ A Gentle Introduction to Lex
 
         Here the Opening Keynote spans both room columns, and the Workshop spans two time slots.
 
-    8.3 Multi-line Cells
+    9.3 Multi-line Cells
 
         When you need more than one line of text in a cell, separate rows with blank lines. Each group of consecutive pipe lines becomes one row, and lines within a group stack as multi-line cell content.
 
@@ -244,7 +251,7 @@ A Gentle Introduction to Lex
             | Trial 2 | No growth       |
         :: table ::
 
-    8.4 Inline Formatting
+    9.4 Inline Formatting
 
         Since tables are a native element, cells support Lex inlines just like paragraphs do.
 
@@ -255,7 +262,7 @@ A Gentle Introduction to Lex
             | #E = mc^2#        | Mass-energy equivalence              |
         :: table align=ll ::
 
-9. Annotations
+10. Annotations
 
     Annotations are metadata, that is, information about the content, not the content itself. They are used to add extra information, like comments, explanations, or any other kind of data that is not part of the main content but is still relevant.
 
@@ -273,7 +280,7 @@ A Gentle Introduction to Lex
         - Be civil when engaging in discussions, community trumps correctness.
         - Be open to changing your mind, the world is complex and we are all fallible.
 
-    9.1 Annotation Attachment
+    10.1 Annotation Attachment
 
         In order to be useful, annotations must have clear targets, to what the annotation is attached to. That allows people, tools and agents to know and have the right context, be it for discussion or a bespoke interface.
 
@@ -286,7 +293,7 @@ A Gentle Introduction to Lex
         - Multiple annotations are supported for the same target.
         - If, at that level, no target precedes it, then the annotation is attached to the parent element (the container in which it appears).
 
-    9.2 Short-Form
+    10.2 Short-Form
 
         For quick notes, Lex supports another form, for annotations whose content is a single line of text, by following the label with the content directly.
 
@@ -294,17 +301,17 @@ A Gentle Introduction to Lex
 
         Here instead of having "Ada Lovelace" in an indented, separate line, we have it right after the label. This is a more compact form, that can be useful for quick notes, but it can only be used for single line content, and it doesn't support any other element inside it, since it's all in one line.
 
-10. Intermezzo III: Text Modifiers
+11. Intermezzo III: Text Modifiers
 
     With these elements, we have covered the structural elements, also called block elements (as each defines its own, possibly multi-line, region). We've seen how sessions structure the document, how paragraphs are the basic text element, how lists and definitions can organize content in different ways, and how verbatim blocks and annotations can include content that is not strictly Lex formatted or add metadata to the content.
 
     The next elements appear intermingled with the text itself, as they modify a word or group of words, hence they are called inlines.
 
-11. Inlines
+12. Inlines
 
     There are three types of inlines: formatting, languages and references.
 
-    11.1 Formatting Inlines
+    12.1 Formatting Inlines
 
         These are inlines that mark their word(s):
 
@@ -314,46 +321,46 @@ A Gentle Introduction to Lex
 
         These can be nested: you can have *bold with _emphasis_ inside* or _italic with *bold* inside_. The only restriction is that same-type nesting is not allowed (no bold inside bold).
 
-    11.2 Language Inlines
+    12.2 Language Inlines
 
         Verbatim blocks allow us to include any type of content, math, music, programming languages. But they do require a full block, they don't allow us to, mid sentence, reference a few words, say an equation or a melody.
 
-        11.2.1 Math
+        12.2.1 Math
 
             For math, we can use the # marker, with the math content enclosed between # symbols. For example, #x^2 + y^2 = z^2# renders the equation inline with the text. The content inside is treated literally, so you can use any math notation without worrying about Lex interpreting it.
 
-        11.2.2 Music
+        12.2.2 Music
 
             [TK-music-inline]
 
-12. References
+13. References
 
     The final inline type, references are important enough to warrant a session all to themselves. References link ideas, and, as such, they are, together with structuring (sessions), describing (paragraphs), defining (definitions), listing (lists), annotating (annotations) and including external content (verbatim blocks), one of the core functions of Lex.
 
     The general form for references, like all inlines, is the marker, in this case [ to start and ] to end, with the reference content in between. References come in several types:
 
-    12.1 URL References
+    13.1 URL References
 
         For linking to web resources. The content starts with `http://`, `https://`, or `mailto:`.
 
         Check out [https://lex.ing] for more information.
         Send feedback to [mailto:hello@lex.ing].
 
-    12.2 Session References
+    13.2 Session References
 
         For linking to other parts of the same document. The content starts with #, followed by the session marker.
 
-        As we discussed in [#3], simplicity is a core principle.
-        See [#1.2.c] for roman numeral markers.
+        As we discussed in [#4], simplicity is a core principle.
+        See [#2.2.c] for roman numeral markers.
 
-    12.3 File References
+    13.3 File References
 
         For linking to other files. The content starts with . or /.
 
         See the full grammar at [./grammar-core.lex].
         Configuration lives at [/etc/lex/config.toml].
 
-    12.4 Citation References
+    13.4 Citation References
 
         For academic-style citations. The content starts with @, and supports multiple keys and page locators.
 
@@ -361,7 +368,7 @@ A Gentle Introduction to Lex
         Multiple sources agree [@smith2023; @jones2022].
         See the details in [@author2023, pp. 42-45].
 
-    12.5 Footnote References
+    13.5 Footnote References
 
         For adding supplementary notes. There are two forms: numbered, using a plain integer, and labeled, starting with ^.
 
@@ -370,30 +377,30 @@ A Gentle Introduction to Lex
 
         Numbered footnotes link to a corresponding entry in a Notes session at the end of the document (see [#Notes]).
 
-    12.6 TK (To Come) References
+    13.6 TK (To Come) References
 
         A placeholder for content that is not yet written. TK stands for "to come" and is a common convention in publishing.
 
         The implementation details are [TK].
         The benchmarks section is [TK-benchmarks].
 
-    12.7 Not Sure References
+    13.7 Not Sure References
 
         When you're not sure what to reference, or want to flag something for later.
 
         This needs a source [!!!].
 
-    12.8 General References
+    13.8 General References
 
         Any other text inside brackets becomes a general reference, useful for cross-referencing by name.
 
         See the [Definitions] section for more.
 
-13. Conclusion
+14. Conclusion
 
     This is Lex. A format for ideas, where simplicity meets expressiveness. With sessions for structure, paragraphs for prose, lists for collections, definitions for terms, verbatim blocks for foreign content, annotations for metadata, inlines for emphasis and references for linking, you have a complete toolkit for capturing and organizing your thinking, from a quick note to a complex document.
 
 Notes
 
-    1. Parameters are structured metadata written as `key=value` pairs, separated by commas, and placed inside the Lex markers (`::`) after the label. Keys follow the pattern `letter (letter | digit | "_" | "-")*`, so things like `severity`, `ref-id`, or `api_version` are valid. Values can be unquoted (letters, digits, dashes, periods only, like `high` or `3.11`) or quoted (any text, like `"Hello World"` or `"path with spaces"`). Inside quoted values, use `\"` for a literal quote and `\\` for a literal backslash. For example: `:: warning severity=high ::`, `:: image src="angkorwat.jpg" ::`, or `:: author name="Jane Doe" ::`. Parameters are used in verbatim blocks [#7] and annotations [#9] to provide tooling with structured information beyond the label.
+    1. Parameters are structured metadata written as `key=value` pairs, separated by commas, and placed inside the Lex markers (`::`) after the label. Keys follow the pattern `letter (letter | digit | "_" | "-")*`, so things like `severity`, `ref-id`, or `api_version` are valid. Values can be unquoted (letters, digits, dashes, periods only, like `high` or `3.11`) or quoted (any text, like `"Hello World"` or `"path with spaces"`). Inside quoted values, use `\"` for a literal quote and `\\` for a literal backslash. For example: `:: warning severity=high ::`, `:: image src="angkorwat.jpg" ::`, or `:: author name="Jane Doe" ::`. Parameters are used in verbatim blocks [#8] and annotations [#10] to provide tooling with structured information beyond the label.
     2. Labels follow the pattern `letter (letter | digit | "_" | "-" | ".")*`. Valid labels include `note`, `warning`, `javascript`, `code-example`, `api_endpoint`, and even dotted namespaces like `build.debug` or `lint.ignore`. Labels must start with a letter and cannot contain colons or slashes. Dotted namespaces are useful for tool-specific annotations, letting different systems coexist without collision.
