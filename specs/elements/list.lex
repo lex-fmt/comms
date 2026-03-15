@@ -16,16 +16,13 @@ Introduction
 Syntax
 
 	Pattern:
-		<blank-line>
 		- First item
 		- Second item
 		- Third item
 
-	Key rule: Lists REQUIRE a preceding blank line
-	(for disambiguation from paragraphs containing dash-prefixed text)
-
-	Minimum items: 2
-	(single dash-prefixed lines are paragraphs, not lists)
+	Key rule: Lists require at least 2 list items.
+	Blank lines before lists are optional (the parser uses look-ahead to detect list boundaries).
+	Single dash-prefixed lines are paragraphs, not lists.
 
 List Item Markers
 
@@ -83,22 +80,28 @@ Compact and Extended Marker forsm
 
 Blank Line Rule
 
-	Lists require a preceding blank line for disambiguation:
+	Blank lines before lists are optional. The parser detects list boundaries via look-ahead:
 
-	Paragraph (no list):
+	List without blank line:
 		Some text
-		- This dash is just text, not a list item
+		- This is a list item
+		- Second item confirms the list
 
-	List (has blank line):
+	List with blank line (also valid):
 		Some text
 
 		- This is a list item
 		- Second item
 
+	Single list-like line (not a list):
+		Some text
+		- This stays in the paragraph (only one item)
+		And this continues the same paragraph.
+
 	No blank lines BETWEEN list items:
 		- Item one
 		- Item two
-		
+
 		- This starts a NEW list (blank line terminates previous)
 
 Content

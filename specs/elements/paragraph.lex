@@ -28,11 +28,14 @@ The Catch-All Rule
 
 Paragraph Boundaries
 
-	Paragraphs are separated by:
-		- Blank lines (one or more)
-		- Different element types
+	Paragraphs end when:
+		- A blank line is encountered
+		- 2+ consecutive list-item-lines follow (yields to list)
+		- A subject-line followed by an indent follows (yields to definition)
 		- Dedent (back to parent level)
 		- End of document
+
+	The parser scans lines one at a time and uses look-ahead to detect element boundaries. This means blank lines between paragraphs and lists or definitions are optional.
 
 	Continuous text (no blank lines) forms single paragraph:
 		This is line one
@@ -43,6 +46,12 @@ Paragraph Boundaries
 		First paragraph here.
 
 		Second paragraph here.
+
+	Paragraph yields to list without blank line:
+		This is a paragraph.
+		- First list item
+		- Second list item
+		Back to paragraph after the list.
 
 Content
 
@@ -55,11 +64,6 @@ Special Cases
 	Single list-item-like line (not a list):
 		- Just one item here
 		(becomes paragraph because lists need 2+ items)
-
-	Dash-prefixed without blank line (not a list):
-		Some text
-		- This dash is just text
-		(becomes paragraph because no preceding blank line)
 
 	Invalid annotations (degrade to paragraphs):
 		:: missing closing marker
