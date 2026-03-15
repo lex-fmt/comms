@@ -92,12 +92,12 @@ Useful Mental Models when Parsing Lex
         | Paragraph  | Optional    | Any Line            | -        | -        | BlankLine/Dedent |
     :: doc.table ::
 
-    *List preceding blank: at root level, lists require a preceding blank line. Inside containers, they do not. See the list spec and grammar patterns list vs list_no_blank for details.
+    *List preceding blank: blank lines before lists are optional. The parser uses look-ahead to detect list boundaries (2+ consecutive list-item-lines).
 
     In short:
 
     - What distinguishes definitions from verbatim is that definitions require content without an opening content blank line.
-    - Sessions can be told apart from lists as lists require 2+ items, not split by blank lines, where session headings must be enclosed in such, then followed by content.
+    - Sessions can be told apart from lists as lists require 2+ items not split by blank lines, where session headings must be followed by a blank line and then indented content.
 
 5. Common Gotchas
 
@@ -112,7 +112,7 @@ Useful Mental Models when Parsing Lex
 
         That is: decoration markers are a formatting / normalization preference, which Lex will honor on formatting and interop.
 
-        Session headers, not only can have the same markers as lists, but they can have none (a regular line). That is, again, what tells a session apart is a single line of text, enclosed in blank lines, followed by indented content. List items do require one valid decoration though (else they would be indistinguishable from regular lines of text).
+        Session headers, not only can have the same markers as lists, but they can have none (a regular line). That is, again, what tells a session apart is a single line of text, followed by a blank line, then indented content. List items do require one valid decoration though (else they would be indistinguishable from regular lines of text).
 
         Trying to parse from the decoration style will lead you astray. The other bit: lists require more than one item at the top level:
 
@@ -128,7 +128,7 @@ Useful Mental Models when Parsing Lex
 
         The hardest elements to tell apart are precisely the interplay between sessions, paragraphs and lists, as no clear markers and rules are apparent (but there are).
 
-        For that reason, we call this the trifecta. If you can get mixed and nested versions of them correctly, most of the parsing is done. And to get that right, there are no two ways, you need to first test for lists (2+ items without intervening blank lines), then sessions (heading enclosed in blank lines, followed by indented content), and paragraphs are the fallback, that is, everything that is not a clear list nor session.
+        For that reason, we call this the trifecta. If you can get mixed and nested versions of them correctly, most of the parsing is done. And to get that right, there are no two ways, you need to first test for lists (2+ items without intervening blank lines), then sessions (heading followed by blank line and indented content), and paragraphs are the fallback — they use look-ahead to yield before list and definition boundaries.
 
     5.3 Verbatim and Definitions
 

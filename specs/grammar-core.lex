@@ -184,14 +184,13 @@ Grammar for lex
     Labels are mandatory; parameters are optional.
     Content cannot include sessions or nested annotations.
 
-    <list> = <blank-line> <list-item-line>{2,*}
-    <list-in-container> = <list-item-line>{2,*}
+    <list> = <blank-line>? <list-item-line>{2,*}
 
-    Note: Lists require a preceding blank line for disambiguation at root level. This means:
-    - At root level, a list must start after a blank line (or at document start)
-    - Inside containers (sessions, definitions), lists do NOT require a preceding blank line
+    Note: Blank lines before lists are optional. The parser uses look-ahead to detect list boundaries:
+    - A paragraph ends when the next 2+ lines are list-item-lines (confirming a list start)
     - Blank lines between list items are NOT allowed (would terminate the list)
     - Single list-item-lines become paragraphs (not lists)
+    - Blank lines before lists are still legal and common, but no longer required
 
     <definition> = <subject-line> <indent> <definition-content>
     <definition-content> = (<paragraph> | <list> | <definition> | <verbatim-block> | <annotation>)+
@@ -225,11 +224,17 @@ Grammar for lex
 
     <paragraph> = <any-line>+
 
+    Note: Paragraphs use imperative look-ahead matching instead of greedy regex.
+    A paragraph scans lines one at a time and stops before element boundaries:
+    - Before 2+ consecutive list-item-lines (yields to list)
+    - Before a subject-line followed by an indent (yields to definition)
+    This enables optional blank lines between paragraphs and lists/definitions.
+
     <document> = <metadata>? <content>
     <metadata> = (document metadata, non-content information)
     <content> = (<verbatim-block> | <annotation> | <paragraph> | <list> | <definition> | <session>)*
 
-    Parse order: <verbatim-block> | <annotation> | <list-in-container>? | <list> | <definition> | <session> | <paragraph>
+    Parse order: <verbatim-block> | <annotation> | <list> | <definition> | <session> | <paragraph>
 
 4. Implementation Notes: Differences from Formal Specification
 
@@ -254,8 +259,7 @@ Grammar for lex
         Specification compliance: FULL
 
         List rules:
-        - At root level: preceded by a blank line (or at document start)
-        - Inside containers (sessions, definitions): no preceding blank line required
+        - Blank lines before lists are optional (paragraph look-ahead detects list boundaries)
         - Must contain at least 2 list items
         - Blank lines between items terminate the list
 
@@ -266,7 +270,7 @@ Grammar for lex
         - Roman: I. or I) (Roman numerals with period or paren)
         - Double-paren: (1) or (a) (number/letter with double parentheses)
 
-        Single items: A single list-item-line (without blank line prefix) becomes a paragraph,
+        Single items: A single list-item-line becomes a paragraph,
         not a list. This correctly implements "Single list-item-lines become paragraphs".
 
     4.3. Definition Elements
@@ -303,19 +307,18 @@ Grammar for lex
 
     4.6. Paragraph Elements
 
-        Specification compliance: PARTIAL - implementation is more sophisticated
+        Specification compliance: FULL
 
-        What the spec says:
-        - <paragraph> = <any-line>+
-        - Simple: consecutive non-blank lines form a paragraph
+        Paragraph matching uses imperative look-ahead instead of greedy regex.
+        The parser scans content lines one at a time and stops before element boundaries:
+        - Before 2+ consecutive list-item-lines (yields to list)
+        - Before a subject-line followed by an indent (yields to definition)
 
-        What implementation adds:
-        - Each line is wrapped in a TextLine object (not just raw text)
-        - Lines are separated by newline tokens (preserved in structure)
-        - This allows formatters to reconstruct exact source spacing
+        This enables paragraphs to transition directly into lists and definitions
+        without requiring blank line separators.
 
-        This is not a functional difference but a structural one that enables
-        more accurate source-round-tripping in tools like formatters.
+        Each line is wrapped in a TextLine object with newline tokens preserved,
+        enabling accurate source-round-tripping in formatters.
 
     4.7. Parsing Precedence Order
 
@@ -323,16 +326,15 @@ Grammar for lex
         1. verbatim-block (imperative match — requires closing annotation, tried first)
         2. annotation-block (block annotation with indented content)
         3. annotation-single (single-line annotation)
-        4. list-no-blank (inside containers only — 2+ items, no preceding blank required)
-        5. list (at root — requires preceding blank line + 2+ items)
+        4. list (2+ items, optional preceding blank line)
+        5. session (requires subject + blank line(s) + indent)
         6. definition (requires subject + immediate indent, no blank line)
-        7. session (requires subject + blank line(s) + indent)
-        8. paragraph (fallback — catches everything else)
-        9. blank-line-group (one or more consecutive blank lines)
+        7. paragraph (imperative look-ahead — yields before list/definition boundaries)
+        8. blank-line-group (one or more consecutive blank lines)
 
         This order is CRITICAL for correct parsing because:
         - Verbatim blocks are the only elements with closing annotations
         - Annotations must be tried before lists (both can start at line beginning)
-        - Lists inside containers don't need a blank line; root lists do
+        - Lists are tried before paragraphs; paragraphs also use look-ahead to yield before lists
         - Definitions vs sessions are distinguished by blank line presence
-        - Paragraphs catch any remaining lines
+        - Paragraphs use imperative matching to stop before element boundaries

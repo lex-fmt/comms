@@ -66,7 +66,7 @@ A Gentle Introduction to Lex
 
     A collection of things is a common need in ideas, after all that's a good way to think about the world: your children is the list of your offspring, states in a country, items in a shopping list.
 
-    Lists are made up of at least two items, one after the other, and the first being separated by a blank line from what came before.
+    Lists are made up of at least two items, one after the other. Blank lines before lists are optional — the parser detects list boundaries automatically.
 
     - Miles Davis
     - Dave Brubeck
@@ -110,7 +110,7 @@ A Gentle Introduction to Lex
     Term goes here:
         Definition. Inside the definition element, indented with a +1 level, like a session's content or a child list.
 
-        The definition content can have multiple paragraphs, lists, and even other definitions. They cannot however, have blank lines between the term and the value: that blank line would turn it into a session instead.
+        The definition content can have multiple paragraphs, lists, and even other definitions. Blank lines before definitions are optional, but there cannot be a blank line between the term and the value: that blank line would turn it into a session instead.
 
 6. Intermezzo II: Special Lex Syntax
 

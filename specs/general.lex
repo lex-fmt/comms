@@ -73,10 +73,8 @@ The lex language
 
     6. Paragraphs
 
-        Paragraphs are one or more consecutive non-blank lines.
+        Paragraphs are one or more consecutive non-blank lines that do not form another element.
 
-        The trick is that paragraphs are a catch-all. That is, you don't match for paragraphs; you establish a paragraph by failing to match anything else.
+        Paragraphs use look-ahead to detect element boundaries: they stop before list starts (2+ list-item-lines) and definition starts (subject-line + indent). This means blank lines between paragraphs and lists or definitions are optional.
 
-        The reason for this is twofold: for starters, the general syntax of paragraphs (any number of non-blank lines) is as generic as possible. That is, it will match anything. Hence it has to happen last.
-
-        Additionally, lex is forgiving, and if it's not sure about an element form, it's a paragraph, precisely because paragraphs are pretty much anything.
+        Paragraphs are also the catch-all: if text doesn't match any other element pattern, it's a paragraph. This makes lex forgiving — ambiguous content defaults to paragraph.

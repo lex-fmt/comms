@@ -13,7 +13,7 @@ Lists require at least two items: {{paragraph}}
 - First item {{list-item}}
 - Second item {{list-item}}
 
-Paragraph followed by list WITH blank line (required): {{paragraph}}
+Paragraph followed by list WITH blank line (optional): {{paragraph}}
 
 - This is a list {{list-item}}
 - Blank line required before list {{list-item}}
@@ -42,3 +42,19 @@ Valid mixed decoration list: {{paragraph}}
 - First item {{list-item}}
 1. Second item {{list-item}}
 a. Third item {{list-item}}
+
+List without preceding blank line (paragraph yields): {{paragraph}}
+- No blank needed anymore {{list-item}}
+- Parser stops paragraph before list start {{list-item}}
+
+Paragraph resumes after list without blank: {{paragraph}}
+
+Multiple paragraphs then list without blank: {{paragraph}}
+Some more text in the same paragraph. {{paragraph}}
+- First no-blank item {{list-item}}
+- Second no-blank item {{list-item}}
+Back to paragraph after list. {{paragraph}}
+
+Single list-like line stays in paragraph: {{paragraph}}
+- This is not a list since only one item {{paragraph}}
+And this continues the same paragraph. {{paragraph}}
