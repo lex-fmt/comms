@@ -99,6 +99,16 @@ Proposal: The Table Element
             | Alice | 95 |
         :: lex ::
 
+    3.3 Mismatched Row Lengths
+
+        If a row has fewer cells than the maximum column count (usually established by the header), the parser pads the row with empty cells up to that maximum.
+
+            | Name  | Age | City     |
+            | Alice | 30  |
+        :: lex ::
+
+        The second row implicitly becomes `| Alice | 30 |  |`.
+
 4. Headers
 
     4.1 Default: First Row Is Header
@@ -391,6 +401,8 @@ Proposal: The Table Element
     13.3 Literal Merge Markers in Content
 
         To include literal `>>` or `^^` as cell text, escape them with a backslash (`\>>`, `\^^`) or wrap in an inline marker (`` `>>` ``, `` `^^` ``). Since the merge detection checks for exact trimmed content match, any inline marker prevents the match.
+
+        *Implementation Note:* The parser must identify structural cell spans before applying inline parsing. Therefore, the exact match check operates on the raw text (after trimming). If the raw text is exactly `\>>`, the structural span check ignores it. During the subsequent inline parsing stage, the escape sequence is processed to yield the literal `>>` text.
 
     13.4 Minimum Row Count
 
