@@ -196,15 +196,64 @@ A Gentle Introduction to Lex
 
 8. Tables
 
-    Tables are incredibly useful for organizing data in a structured way. For now, Lex uses a verbatim block with the `table` label.
+    Tables are incredibly useful for organizing data in a structured way. In Lex, tables are a native element: their cells support all inline formatting (*bold*, _emphasis_, `code`, references), and the formatter can auto-align columns for you. A table has a caption (a subject line ending with a colon), pipe-delimited rows, and a closing annotation with the `table` label.
 
     Some Jazz Records:
         | Name         | Year | Artist         |
-        |--------------|------|----------------|
         | Kind of Blue | 1959 | Miles Davis    |
         | Time Out     | 1959 | Dave Brubeck   |
         | Mingus Ah Um | 1959 | Charles Mingus |
     :: table ::
+
+    By default, the first row is treated as a header. You can change this with the `header` parameter: `header=0` for no header, `header=2` for two header rows, and so on.
+
+    8.1 Alignment
+
+        Column alignment is specified via the `align` parameter, using one letter per column: `l` for left (the default), `c` for center, `r` for right.
+
+        Some Jazz Records:
+            | Name         | Year | Artist         |
+            | Kind of Blue | 1959 | Miles Davis    |
+            | Time Out     | 1959 | Dave Brubeck   |
+            | Mingus Ah Um | 1959 | Charles Mingus |
+        :: table align=lcl ::
+
+    8.2 Cell Merging
+
+        Cells can span multiple columns or rows using merge markers. A cell containing `>>` merges into its left neighbor (column span), while `^^` merges into the cell above it (row span).
+
+        Conference Schedule:
+            | Time  | Room A          | Room B     |
+            | 9:00  | Opening Keynote | >>         |
+            | 10:00 | Workshop        | Panel      |
+            | 11:00 | ^^              | Discussion |
+        :: table ::
+
+        Here the Opening Keynote spans both room columns, and the Workshop spans two time slots.
+
+    8.3 Multi-line Cells
+
+        When you need more than one line of text in a cell, separate rows with blank lines. Each group of consecutive pipe lines becomes one row, and lines within a group stack as multi-line cell content.
+
+        Experiment Log:
+            | Trial   | Result          |
+
+            | Trial 1 | Successful      |
+            |         | after 48 hours  |
+
+            | Trial 2 | No growth       |
+        :: table ::
+
+    8.4 Inline Formatting
+
+        Since tables are a native element, cells support Lex inlines just like paragraphs do.
+
+        Reference Table:
+            | Term              | Definition                           |
+            | *Polymorphism*    | Multiple forms of a single interface |
+            | `print()`         | Output to standard out               |
+            | #E = mc^2#        | Mass-energy equivalence              |
+        :: table align=ll ::
 
 9. Annotations
 
