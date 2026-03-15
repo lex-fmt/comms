@@ -1,0 +1,6 @@
+Migration Example:
+    | Name  | Score |
+    |-------|-------|
+    | Alice | 95    |
+    | Bob   | 87    |
+:: table ::

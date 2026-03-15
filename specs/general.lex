@@ -70,8 +70,15 @@ The lex language
         - Block form (with text content): For embedding raw text like source code
         - Marker form (no content): For referencing external or binary data
 
+    6. Tables
 
-    6. Paragraphs
+        Tables are a native element for structured, tabular data. They share the outer structure of verbatim blocks (subject line, indented content, closing annotation) but with inline-parsed pipe-delimited content.
+
+        Tables support cell spanning (colspan via `>>`, rowspan via `^^`), multi-line cells (via blank-line-separated row groups), footnotes (scoped numbered lists), and organizational hints (alignment, header count) in the closing annotation parameters.
+
+        The closing annotation label `table` distinguishes tables from verbatim blocks.
+
+    7. Paragraphs
 
         Paragraphs are one or more consecutive non-blank lines that do not form another element.
 

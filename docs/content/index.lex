@@ -59,7 +59,7 @@ Home
 
     Definition:
         Rich Blocks:
-            Use verbatim blocks for code or ASCII diagrams, annotations for metadata, and lists or definitions for structured prose.
+            Use verbatim blocks for code, tables for structured data with spanning and footnotes, annotations for metadata, and lists or definitions for structured prose.
 
 5. Getting Started
 

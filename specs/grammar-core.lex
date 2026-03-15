@@ -162,7 +162,7 @@ Grammar for lex
 
 3. Element Grammar
 
-    These are the core elements of lex: annotations, lists, definitions, sessions, verbatim blocks, and paragraphs:
+    These are the core elements of lex: annotations, lists, definitions, sessions, verbatim blocks, tables, and paragraphs:
 
     <data> = <lex-marker> <whitespace> <label> (<whitespace> <parameters>)?
     <annotation> = <data> <annotation-marker> <annotation-tail>?
@@ -222,6 +222,22 @@ Grammar for lex
     and closing annotation must be at same level as subject.
     The closing annotation can have optional text content after the second :: marker (single-line form).
 
+    <table> = <subject-line> <blank-line>? <table-content> <footnote-section>? <closing-annotation>
+    <table-content> = <indent> (<table-row> | <separator-line> | <blank-line>)+ <dedent>
+    <table-row> = <pipe-line>+
+    <pipe-line> = '|' (<cell-content> '|')+ <line-break>
+    <cell-content> = <inline-content>*
+    <separator-line> = '|' (<dash> | <colon> | <space> | '|')+ '|' <line-break>
+    <footnote-section> = <blank-line> <list>
+    <closing-annotation> = '::' <whitespace> 'table' (<whitespace> <parameters>)? <whitespace> '::'
+
+    Note: Tables share the outer structure of verbatim blocks but with inline-parsed content.
+    The closing annotation label `table` distinguishes tables from verbatim blocks.
+    Detection happens at the verbatim matching stage; the label determines interpretation.
+    Cell content supports all lex inlines. Merge markers (`>>` for colspan, `^^` for rowspan)
+    are resolved during AST assembly. Multi-line mode is auto-detected by blank lines between
+    pipe groups.
+
     <paragraph> = <any-line>+
 
     Note: Paragraphs use imperative look-ahead matching instead of greedy regex.
@@ -232,9 +248,12 @@ Grammar for lex
 
     <document> = <metadata>? <content>
     <metadata> = (document metadata, non-content information)
-    <content> = (<verbatim-block> | <annotation> | <paragraph> | <list> | <definition> | <session>)*
+    <content> = (<verbatim-block> | <table> | <annotation> | <paragraph> | <list> | <definition> | <session>)*
 
-    Parse order: <verbatim-block> | <annotation> | <list> | <definition> | <session> | <paragraph>
+    Parse order: <verbatim-block>/<table> | <annotation> | <list> | <definition> | <session> | <paragraph>
+
+    Note: Verbatim blocks and tables are detected together at the same precedence level.
+    The closing annotation label determines whether a Table or Verbatim node is created.
 
 4. Implementation Notes: Differences from Formal Specification
 
@@ -305,6 +324,18 @@ Grammar for lex
         Content is NOT parsed (preserves raw whitespace/formatting exactly).
         Indentation Wall rule: correctly enforced — content must be indented deeper than subject.
 
+    4.5b. Table Elements
+
+        Specification compliance: NEW
+
+        Tables share the verbatim outer structure. Detection occurs at the verbatim matching
+        stage; closing annotation label `table` triggers table parsing instead of raw preservation.
+        Content is inline-parsed (cell content supports all lex inlines).
+        Merge markers (`>>` colspan, `^^` rowspan) are resolved during AST assembly.
+        Multi-line mode auto-detected by blank lines between pipe groups.
+        Separator lines (pipes enclosing only dashes/colons/equals) are cosmetic and skipped.
+        Indentation Wall rule applies identically to verbatim blocks (in-flow and fullwidth modes).
+
     4.6. Paragraph Elements
 
         Specification compliance: FULL
@@ -333,7 +364,8 @@ Grammar for lex
         8. blank-line-group (one or more consecutive blank lines)
 
         This order is CRITICAL for correct parsing because:
-        - Verbatim blocks are the only elements with closing annotations
+        - Verbatim blocks and tables are the only elements with closing annotations
+        - Tables are detected at the verbatim stage; the label determines the node type
         - Annotations must be tried before lists (both can start at line beginning)
         - Lists are tried before paragraphs; paragraphs also use look-ahead to yield before lists
         - Definitions vs sessions are distinguished by blank line presence
