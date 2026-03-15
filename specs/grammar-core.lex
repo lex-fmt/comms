@@ -246,9 +246,15 @@ Grammar for lex
     - Before a subject-line followed by an indent (yields to definition)
     This enables optional blank lines between paragraphs and lists/definitions.
 
-    <document> = <metadata>? <content>
-    <metadata> = (document metadata, non-content information)
+    <document> = <metadata>? <document-title>? <content>
+    <metadata> = <annotation>* (document-level annotations, before the title)
+    <document-title> = <text-line> <blank-line>+ (?!<indent>)
     <content> = (<verbatim-block> | <table> | <annotation> | <paragraph> | <list> | <definition> | <session>)*
+
+    Note: The document title is a first-class element, parsed as a dedicated `DocumentTitle` AST node.
+    It is a single unindented line followed by blank lines, where no indented content follows
+    (the negative lookahead `(?!<indent>)` distinguishes it from a session title).
+    See [./elements/document.lex] for full specification.
 
     Parse order: <verbatim-block>/<table> | <annotation> | <list> | <definition> | <session> | <paragraph>
 
