@@ -1,4 +1,4 @@
-Kitchensink Test Document {{paragraph}}
+Kitchensink Test Document {{document-title}}
 
 This document includes *all major features* of the lex language to serve as a comprehensive "kitchensink" regression test for the parser, as noted in [@spec2025, pp. 45-46]. {{paragraph}}
 
