@@ -1,5 +1,5 @@
 Kitchensink Test Document:
-A Comprehensive Regression Test {{document-title}}
+A Comprehensive Regression Test {{paragraph}}
 
 This document includes *all major features* of the lex language to serve as a comprehensive "kitchensink" regression test for the parser, as noted in [@spec2025, pp. 45-46]. {{paragraph}}
 
