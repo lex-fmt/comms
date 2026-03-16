@@ -113,10 +113,10 @@ This document demonstrates all semantic token types emitted by lex-lsp and serve
         Footnotes [^like this] or [1] (muted + underline)
     VerbatimSubject:
         Label before :: in code blocks (faint)
-    VerbatimLanguage:
-        Language identifier after :: (faint)
-    VerbatimAttribute:
-        Attributes like language=bash (faint)
+    DataLabel:
+        Label in data markers (:: label ::), used for both annotation and verbatim (faint)
+    DataParameter:
+        Parameters in data markers like severity=high (faint)
     VerbatimContent:
         Code block content (normal, may link to @markup.raw.block)
     InlineMarker_*:
