@@ -15,12 +15,11 @@ Introduction
 	- Annotations have optional content: which can be the single line shortcut or the regular content conatainer form, which allows all elements but sessions to be part (including nesting). While not prohibited, annotations should not contain other annotations as their content as the semantic meaning would be ... why bother?
 
 
-Syntax Forms:
+Syntax Forms
 
-	Data node (reusable header):
-		:: label ::
-		:: label params
-		(The closing :: belongs to the embedding element.)
+	Annotations use a data marker (specs/v1/elements/data.lex) in closed form as
+	their header. The data marker provides the label and optional parameters; the
+	annotation adds the closing :: and optional content.
 
 	Marker form (no content):
 		:: label ::
@@ -33,7 +32,8 @@ Syntax Forms:
 	Block form (indented content, dedent closes the block):
 		:: label ::
 		    indented paragraph or list
-	Can be empty (marker form - the label itself carries meaning)
+
+	Can be empty (marker form - the label itself carries meaning).
 	Forms:
 	- Inline text (single-line form)
 	- Block content (paragraphs/lists, but NOT sessions or nested annotations)

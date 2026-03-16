@@ -87,7 +87,7 @@ Useful Mental Models when Parsing Lex
         | Session    | Yes         | ParagraphLine       | Yes      | Yes      | dedent           |
         | Definition | Optional    | SubjectLine         | No       | Yes      | dedent           |
         | Verbatim   | Optional    | SubjectLine         | Optional | Optional | dedent + DataLine|
-        | Annotation | Optional    | AnnotationStartLine | Yes      | Yes      | dedent           |
+        | Annotation | Optional    | DataMarkerLine      | Yes      | Yes      | dedent           |
         | List       | Optional*   | ListLine            | No       | Optional | dedent           |
         | Paragraph  | Optional    | Any Line            | -        | -        | BlankLine/Dedent |
     :: doc.table ::
