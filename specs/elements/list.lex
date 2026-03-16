@@ -57,7 +57,7 @@ Mixing Markers
 		a. Third item
 		- Fourth item
 
-Compact and Extended Marker forsm
+Short and Extended Marker Forms
 
 	Since lists can be nested, markers can reference the current item at the current level, or the absolute one (that is, all of it's list ancestors).
 	For example: 
@@ -76,7 +76,7 @@ Compact and Extended Marker forsm
 			1.a.ii. Nested second item
 		1.b Second item in the same level (absolute: 1.b)
 
-	If a first item is set to extended form, it's list and inner lists will also use the extended form (the root level is too shallow to distinguish the intention of extended vs compact, forms, hence this must happen on the second child level or deeper.
+	If a first item is set to extended form, its list and inner lists will also use the extended form (the root level is too shallow to distinguish the intention of extended vs short forms, hence this must happen on the second child level or deeper.
 
 Blank Line Rule
 

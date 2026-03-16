@@ -37,7 +37,7 @@ A Plain Text Format for Ideas
 
         2.2.d. Style Forms
 
-            These can be short (as in 3.) or extended, that is, containing the full sequence of markers including parent ones. This session, in that style, would be 2.2.d or d in compact form.
+            These can be short (as in 3.) or extended, that is, containing the full sequence of markers including parent ones. This session, in that style, would be 2.2.d or d in short form.
 
         2.2.e. Ordering
 

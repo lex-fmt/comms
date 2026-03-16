@@ -34,22 +34,25 @@ Line Token Grammar for lex
         container where they appear; they are not hoisted across indentation
         boundaries.
 
-    3.2. <annotation-start-line>
+    3.2. <data-marker-line>
 
-        <annotation-start-line> =
+        <data-marker-line> =
             <indent>? <lex-marker> <whitespace>
             <label> (<whitespace> <parameters>)?
             <whitespace>? <lex-marker>
             (<whitespace> <text-span>+)? <line-break>
-        Follows the same <data> grammar as annotations. Tail content after the
-        closing marker stays inline.
+        A data marker in closed form (see specs/v1/elements/data.lex). Used for
+        both annotation start lines and verbatim closing lines — the same
+        syntactic pattern in both roles. Tail content after the closing marker
+        stays inline.
 
     3.3. <data-line>
 
         <data-line> = <indent>? <lex-marker> <whitespace>
             <label> (<whitespace> <parameters>)? <whitespace>* <line-break>
-        Similar to <annotation-start-line> but without a trailing :: marker.
-        Used for metadata headers where the payload stops after the label block.
+        A data marker in open form (see specs/v1/elements/data.lex) without a
+        trailing :: marker. Used for metadata headers where the payload stops
+        after the label block.
 
     3.4. <subject-or-list-item-line>
 
@@ -89,7 +92,7 @@ Line Token Grammar for lex
 
     The classifier evaluates the predicates in this sequence:
         1. <blank-line>
-        2. <annotation-start-line>
+        2. <data-marker-line>
         3. <data-line>
         4. <subject-or-list-item-line>
         5. <list-line>
@@ -105,12 +108,12 @@ Line Token Grammar for lex
     These aliases help parser combinators express higher-level expectations:
 
         <blank-line-group> = (<blank-line>)+
-        <annotation-line> = <annotation-start-line>
-        <content-line> = any classified line excluding annotation-start
+        <data-marker> = <data-marker-line>
+        <content-line> = any classified line excluding data-marker-line
         <any-line> = any non-blank line
         <all-line> = any line, including structural tokens
 
 
-Notes: 
+Notes:
 
 1. lex-parser/src/lex/token/line.rs

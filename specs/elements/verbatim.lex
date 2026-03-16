@@ -23,7 +23,7 @@ Syntax
 
 Verbatim Groups
 
-	Multiple subject/content pairs can share a single closing annotation. This is handy for
+	Multiple subject/content pairs can share a single closing data marker. This is handy for
 	step-by-step shell transcripts or grouped code samples that use the same language.
 
 	Syntax:
@@ -79,7 +79,7 @@ Fullwidth Mode
 
 Content Preservation
 
-	Everything between subject and closing annotation is preserved exactly:
+	Everything between subject and closing data marker is preserved exactly:
 		- All whitespace (spaces, blank lines)
 		- Special characters (no escaping needed)
 		- Indentation beyond the wall (part of content)
@@ -91,11 +91,11 @@ Content Preservation
 		    
 		    function() { return "::"; }  // :: not treated as marker
 		:: javascript ::
-Closing Annotation
+Closing Data Marker
 
-	The closing annotation:
+	The closing data marker (see specs/v1/elements/data.lex):
 		- Must be at same indentation level as subject (at the wall)
-		- Contains the label plus optional parameters, with trailing :: marker
+		- Uses the closed form: :: label params? ::
 		- Signals end of the verbatim block
 
 	Examples:
