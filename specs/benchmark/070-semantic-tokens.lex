@@ -1,5 +1,4 @@
-Semantic Token Highlighting:
-A Visual Test for Editor Syntax
+Semantic Token Highlighting
 
 This document demonstrates all semantic token types emitted by lex-lsp and serves as a visual test for editor syntax highlighting. See https://lexlang.org for more information.
 

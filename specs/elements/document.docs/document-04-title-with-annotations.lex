@@ -1,4 +1,4 @@
-:: author :: Ada Lovelace
+:: author: Arthur Debert ::
 
 Document With Metadata
 
