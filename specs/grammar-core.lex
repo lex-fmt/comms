@@ -248,12 +248,19 @@ Grammar for lex
 
     <document> = <metadata>? <document-title>? <content>
     <metadata> = <annotation>* (document-level annotations, before the title)
-    <document-title> = <text-line> <blank-line>+ (?!<indent>)
+    <document-title> = <title-line> <subtitle-line>? <blank-line>+ (?!<indent>)
+    <title-line> = <text-span> <colon>? <line-break>
+    <subtitle-line> = <text-span> <line-break>
     <content> = (<verbatim-block> | <table> | <annotation> | <paragraph> | <list> | <definition> | <session>)*
 
     Note: The document title is a first-class element, parsed as a dedicated `DocumentTitle` AST node.
     It is a single unindented line followed by blank lines, where no indented content follows
     (the negative lookahead `(?!<indent>)` distinguishes it from a session title).
+    When the title line ends with a colon and a second non-blank, non-indented line
+    follows before the blank separator, the second line is parsed as a subtitle.
+    The trailing colon is structural (stripped from title content).
+    A trailing colon followed directly by a blank line (no subtitle line) remains
+    part of the title content.
     See [./elements/document.lex] for full specification.
 
     Parse order: <verbatim-block>/<table> | <annotation> | <list> | <definition> | <session> | <paragraph>
