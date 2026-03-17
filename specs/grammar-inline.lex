@@ -5,7 +5,8 @@ Inline Token Grammar for lex
 	see [./grammar-line.lex].
 
 	This document defines the inline element tokens used for span-based formatting and references
-	within text content. It mirrors the InlineKind enum in the token/inline.rs[1] code.
+	within text content. It mirrors the InlineKind enum in the token/inline.rs[1] code and the
+	parser in inlines/parser.rs.
 
 1. Scope & Characteristics
 
@@ -15,6 +16,7 @@ Inline Token Grammar for lex
 	- They cannot break parent element boundaries
 	- No space is allowed between the start marker and content
 	- Processing happens after line-based parsing is complete
+	- Unclosed markers are treated as literal text (start marker + content pushed to parent)
 
 2. Inline Token Types
 
@@ -94,6 +96,7 @@ Inline Token Grammar for lex
 		URL Reference:
 			[https://example.com]
 			[http://site.org/path]
+			[mailto:user@example.com]
 
 		Citation Reference:
 			[@doe2024]
@@ -158,10 +161,10 @@ Inline Token Grammar for lex
 			[@author2023; @other2024, pp. 1,5-7] Multiple keys and page ranges
 
 		Parsing Rules:
-		- Keys are separated by semicolon (;) or comma (,)
+		- A single delimiter type is used per citation: if any semicolon exists, keys are split on semicolons; otherwise keys are split on commas. The two delimiters cannot be mixed within a single citation.
 		- Leading @ is required for each key and is stripped during parsing
-		- Locator must come after the last comma if present
-		- Page format can be "p." or "pp." (with or without the period)
+		- Locator must come after the last comma that starts a page format (p./pp.)
+		- Page format can be "p." or "pp." (with or without the period, case-insensitive)
 		- Multiple page ranges can be specified: "1,5-7,10" means pages 1, 5-7, and 10
 
 	2.5.2. Reference Type Detection
@@ -170,15 +173,15 @@ Inline Token Grammar for lex
 		to determine the reference type based on these patterns:
 
 		Detection Order:
-		1. TK Reference: "TK" or "TK-identifier" (case insensitive)
+		0. NotSure: Empty or no alphanumeric characters (e.g., "!!!") — checked first as early return
+		1. TK Reference: "TK" or "TK-identifier" (case insensitive for prefix; identifier must be lowercase ASCII + digits, max 20 characters)
 		2. Citation: Starts with "@" followed by citation parsing
-		3. Footnote (Labeled): Starts with "^" followed by label
-		4. Session: Starts with "#" followed by digits/dots/dashes
+		3. Footnote (Labeled): Starts with "^" followed by non-empty label
+		4. Session: Starts with "#" followed by digits, dots, or dashes only
 		5. URL: Starts with "http://", "https://", or "mailto:"
 		6. File: Starts with "." or "/"
-		7. Footnote (Numbered): Pure numeric content
-		8. General: Any other non-empty content with alphanumeric characters
-		9. NotSure: Empty or no alphanumeric characters (e.g., "!!!")
+		7. Footnote (Numbered): Content is purely numeric (all ASCII digits)
+		8. General: Any other content (fallback)
 
 3. Inline Content Grammar
 
@@ -192,7 +195,7 @@ Inline Token Grammar for lex
 	- Code cannot contain nested inlines (literal)
 	- Math cannot contain nested inlines (literal)
 	- Reference cannot contain nested inlines (literal)
-	- Same-type nesting is blocked: *outer *inner* text* treats inner pair as literal
+	- Same-type nesting is blocked via a counter mechanism: when a start marker for a type already on the stack is found, a blocked counter is incremented; the corresponding end marker is consumed by the counter instead of closing the frame. For example, *outer *inner* text* produces Strong("outer *inner* text") — the inner * pair becomes literal text.
 
 4. Validation Rules
 
@@ -227,6 +230,15 @@ Inline Token Grammar for lex
 
 		The parser preserves empty markers as literal text.
 
+	4.4. Unclosed Markers
+
+		When a start marker has no matching end marker, the opening delimiter and any content
+		accumulated inside the frame are unwound as literal text into the parent context:
+			*unclosed text      Renders as: *unclosed text
+			[no closing bracket Renders as: [no closing bracket
+
+		This ensures all input is preserved and no content is lost.
+
 5. Escape Sequences
 
 	See also [./elements/escaping.lex] for the full escaping specification.
@@ -241,9 +253,12 @@ Inline Token Grammar for lex
 
 	5.2. Backslash Behavior
 
-		- Before non-alphanumeric: escapes the character (backslash is removed)
-		- Before alphanumeric: backslash is preserved (for paths like C:\Users)
+		- Before non-alphanumeric: escapes the character (backslash is removed). This includes non-ASCII non-alphanumeric characters.
+		- Before alphanumeric (ASCII or Unicode): backslash is preserved (for paths like C:\Users)
+		- Double backslash (\\): produces single backslash (since \ is non-alphanumeric)
 		- Trailing backslash at end of input: preserved as literal text
+
+		Escapable special characters: \ * _ ` # [ ]
 
 		Examples:
 			\*text\*               → *text*
@@ -288,4 +303,4 @@ Inline Token Grammar for lex
 
 Notes:
 
-1. lex-parser/src/lex/token/inline.rs
+1. crates/lex-core/src/lex/token/inline.rs
