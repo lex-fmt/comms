@@ -125,10 +125,12 @@ Grammar for lex
             <roman-numeral> = 'I' | 'II' | 'III' | 'IV' | 'V' | ...
 
             <separator> = <period> | <close-paren>
-            
+
             <ordered-marker> = (<number> | <letter> | <roman-numeral>) <separator> <space>
-            <list-item-marker> = <plain-marker> | <ordered-marker>
-            <session-title-marker> = <ordered-marker>
+            <parenthetical-marker> = <open-paren> (<number> | <letter> | <roman-numeral>) <close-paren> <space>
+            <extended-marker> = (<number> | <letter> | <roman-numeral>) (<period> (<number> | <letter> | <roman-numeral>)){1,*} <separator>? <space>
+            <list-item-marker> = <plain-marker> | <ordered-marker> | <parenthetical-marker> | <extended-marker>
+            <session-title-marker> = <ordered-marker> | <parenthetical-marker> | <extended-marker>
         2.2.3. Subject Markers
             <subject> = <colon>
         2.2.4. Text Spans
@@ -153,9 +155,9 @@ Grammar for lex
 
     2.3. Line Tokens
 
-        Line token classification moved to `specs/v1/grammar-line.lex`.
-        The dedicated document stays in lockstep with `lex-parser/src/lex/token/line.rs`
-        and the classifiers under `lex-parser/src/lex/lexing/`, making it the
+        Line token classification moved to `specs/grammar-line.lex`.
+        The dedicated document stays in lockstep with `crates/lex-core/src/lex/token/line.rs`
+        and the classifiers under `crates/lex-core/src/lex/lexing/`, making it the
         authoritative reference for how logical lines are identified prior to the
         element grammar defined below.
 
@@ -174,7 +176,7 @@ Grammar for lex
     <value> = <quoted-string> | <unquoted-value>
     <annotation-tail> = <single-line-content> | <block-content>
     <single-line-content> = <whitespace> <text-line>
-    <block-content> = <line-break> <indent> (<paragraph> | <list>)+ <dedent>
+    <block-content> = <line-break> <indent> (<paragraph> | <list> | <definition> | <verbatim-block> | <table> | <annotation>)+ <dedent>
 
     Note: Annotations have multiple forms:
     - Marker form: :: label :: (no content, no tail)
@@ -182,7 +184,7 @@ Grammar for lex
     - Block form: :: label :: \n <indent>content<dedent> (dedent closes the block)
     - Combined: :: label params :: inline text
     Labels are mandatory; parameters are optional.
-    Content cannot include sessions or nested annotations.
+    Content cannot include sessions.
 
     <list> = <blank-line>? <list-item-line>{2,*}
 
@@ -193,7 +195,7 @@ Grammar for lex
     - Blank lines before lists are still legal and common, but no longer required
 
     <definition> = <subject-line> <indent> <definition-content>
-    <definition-content> = (<paragraph> | <list> | <definition> | <verbatim-block> | <annotation>)+
+    <definition-content> = (<paragraph> | <list> | <definition> | <verbatim-block> | <table> | <annotation>)+
 
     Note: Definitions differ from sessions in one key way:
     - NO blank line between subject and content (immediate indent)
@@ -202,7 +204,7 @@ Grammar for lex
     - Content CAN include nested definitions (recursive), verbatim blocks, and annotations
 
     <session> = <session-title-line> <blank-line> <indent> <session-content>
-    <session-content> = (<paragraph> | <list> | <session> | <definition> | <verbatim-block> | <annotation>)+
+    <session-content> = (<paragraph> | <list> | <session> | <definition> | <verbatim-block> | <table> | <annotation>)+
 
     Notes on separators and ownership:
     - A blank line between the title and the indented content is REQUIRED (disambiguates from definitions).
@@ -251,7 +253,7 @@ Grammar for lex
     <document-title> = <title-line> <subtitle-line>? <blank-line>
     <title-line> = <text-span> <colon>? <line-break>
     <subtitle-line> = <text-span> <line-break>
-    <content> = (<verbatim-block> | <table> | <annotation> | <paragraph> | <list> | <definition> | <session>)*
+    <content> = (<verbatim-block> | <table> | <annotation> | <list> | <definition> | <session> | <paragraph>)*
 
     Note: A document title is the first non-annotation line, followed by a blank line,
     with no indented content after the blank (which would make it a session).
@@ -261,10 +263,11 @@ Grammar for lex
     A trailing colon followed directly by a blank line (no subtitle line) remains
     part of the title content.
 
-    Parse order: <verbatim-block>/<table> | <annotation> | <list> | <definition> | <session> | <paragraph>
+    Parse order: <verbatim-block>/<table> | <annotation> | <list> | <definition> | <session> | <paragraph> | <blank-line-group>
 
     Note: Verbatim blocks and tables are detected together at the same precedence level.
     The closing annotation label determines whether a Table or Verbatim node is created.
+    Document title patterns are tried first (before all element patterns) when at document start.
 
 4. Implementation Notes: Differences from Formal Specification
 
@@ -282,7 +285,7 @@ Grammar for lex
 
         Clarification: Earlier revisions allowed parameter-only annotations; the grammar now factors the shared :: label params? portion into <data> so other elements can embed the same payload while keeping labels mandatory.
 
-        Constraint verification: Content cannot include sessions or nested annotations (enforced).
+        Constraint verification: Content cannot include sessions (enforced). Nested annotations are allowed.
 
     4.2. List Elements
 
@@ -297,8 +300,9 @@ Grammar for lex
         - Plain: - (dash with space)
         - Ordered: 1. or 1) (number with period or paren)
         - Letter: a. or a) (single letter with period or paren)
-        - Roman: I. or I) (Roman numerals with period or paren)
-        - Double-paren: (1) or (a) (number/letter with double parentheses)
+        - Roman: I. or I) or ii. (Roman numerals with period or paren, upper or lower case)
+        - Double-paren: (1) or (a) or (I) (number/letter/roman with double parentheses)
+        - Extended: 4.3.2 or IV.2.1) or 1.a.ii. (multi-segment with optional final separator)
 
         Single items: A single list-item-line becomes a paragraph,
         not a list. This correctly implements "Single list-item-lines become paragraphs".
@@ -365,19 +369,22 @@ Grammar for lex
     4.7. Parsing Precedence Order
 
         The parser attempts matches in this order:
-        1. verbatim-block (imperative match — requires closing annotation, tried first)
-        2. annotation-block (block annotation with indented content)
-        3. annotation-single (single-line annotation)
-        4. list (2+ items, optional preceding blank line)
-        5. session (requires subject + blank line(s) + indent)
-        6. definition (requires subject + immediate indent, no blank line)
-        7. paragraph (imperative look-ahead — yields before list/definition boundaries)
-        8. blank-line-group (one or more consecutive blank lines)
+        1. document-title (with subtitle variant tried first, only at document start)
+        2. verbatim-block (imperative match — requires closing annotation, tried first among elements)
+        3. annotation-block (block annotation with indented content)
+        4. annotation-single (single-line annotation)
+        5. list-no-blank (2+ list items without preceding blank line)
+        6. list (preceding blank line + 2+ list items)
+        7. definition (requires subject + immediate indent, no blank line)
+        8. session (requires subject + blank line(s) + indent)
+        9. paragraph (imperative look-ahead — yields before list/definition boundaries)
+        10. blank-line-group (one or more consecutive blank lines)
 
         This order is CRITICAL for correct parsing because:
+        - Document title must be detected before any element parsing at document start
         - Verbatim blocks and tables are the only elements with closing annotations
         - Tables are detected at the verbatim stage; the label determines the node type
         - Annotations must be tried before lists (both can start at line beginning)
-        - Lists are tried before paragraphs; paragraphs also use look-ahead to yield before lists
-        - Definitions vs sessions are distinguished by blank line presence
+        - Two list patterns exist: one without preceding blank (matched anywhere, paragraph yields) and one with (consumes blank as part of node)
+        - Definitions are tried before sessions because both match subject + container; the blank line presence disambiguates
         - Paragraphs use imperative matching to stop before element boundaries

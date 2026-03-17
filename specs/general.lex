@@ -34,11 +34,11 @@ The lex language
 
 	    Annotations are introduced by a :: data node (label + optional parameters) followed by a closing :: marker and optional content.
 
-        Three forms exist: marker form (:: label ::), single-line form (:: label :: content), and block form (:: label :: \n indented content \n ::).
+        Three forms exist: marker form (:: label ::), single-line form (:: label :: content), and block form (:: label :: \n indented content).
 
-        Note: The block form has two closing :: markers - one immediately after the label/parameters on the opening line, and a second bare :: marker after the indented content.
+        Note: The block form has a single closing :: on the opening line. The indented content that follows is delimited by indentation (indent/dedent), not by a second :: marker.
 
-        Annotation content can include paragraphs and lists, but cannot contain sessions or nested annotations.
+        Annotation content can include paragraphs, lists, definitions, verbatim blocks, tables, and nested annotations, but cannot contain sessions.
 
     2. Lists
 
@@ -52,7 +52,7 @@ The lex language
 
         The subject line identifies what is being defined, while the indented content provides the definition or explanation.
 
-        Definition content can include paragraphs and lists, but cannot contain sessions. This restriction ensures definitions remain focused explanatory units.
+        Definition content can include paragraphs, lists, nested definitions (recursive), verbatim blocks, tables, and annotations, but cannot contain sessions. This restriction ensures definitions remain focused explanatory units.
 
     4. Sessions
 

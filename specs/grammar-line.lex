@@ -24,11 +24,15 @@ Line Token Grammar for lex
         Generated when a `Dedent` token is encountered.
         Synthetic token that marks a decrease in indentation depth.
 
+    2.3. <document-start>
+
+        Synthetic marker injected before document content begins. Placed at position 0 if no document-level annotations exist, or immediately after the last root-level annotation otherwise. Carries no source tokens.
+
 3. Classified Textual Lines
 
     3.1. <blank-line>
 
-        <blank-line> = (<whitespace> | <indentation>)+ <line-break>
+        <blank-line> = (<whitespace> | <indentation>)* <line-break>
         Only whitespace (spaces, tabs, indentation tokens) plus the terminating
         newline. Resets dialog detection state. Blank lines remain in the
         container where they appear; they are not hoisted across indentation
@@ -84,7 +88,7 @@ Line Token Grammar for lex
         - Trigger: a <list-line> whose last two non-whitespace tokens are both
           end punctuation (currently periods).
         - Effect: the triggering line and subsequent non-blank lines inherit the
-          <dialog-line> type until a blank line resets the dialog state.
+          <dialog-line> type until a blank line or a non-list/non-dialog line resets the dialog state.
         - Purpose: accurately model script-style dialog blocks written as list
           items.
 
@@ -99,9 +103,9 @@ Line Token Grammar for lex
         6. <subject-line>
         7. <paragraph-line>
 
-    Structural tokens (<indent>, <dedent>) are emitted directly by the grouping
-    pass and bypass the ordered checks above. <dialog-line> is a mutation step on
-    top of the initial result.
+    Structural tokens (<indent>, <dedent>, <document-start>) are emitted directly
+    by the grouping pass and bypass the ordered checks above. <dialog-line> is a
+    mutation step on top of the initial result.
 
 5. Line Families
 
@@ -116,4 +120,4 @@ Line Token Grammar for lex
 
 Notes:
 
-1. lex-parser/src/lex/token/line.rs
+1. crates/lex-core/src/lex/token/line.rs
