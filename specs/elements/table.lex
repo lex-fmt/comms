@@ -2,19 +2,19 @@ Tables
 
 Introduction
 
-	Tables are a native element for structured, tabular data. They use the same outer structure as verbatim blocks (subject line, indented content, closing annotation) but with inline-parsed pipe-delimited content instead of raw text.
+	Tables are a native element for structured, tabular data. A table is identified by a subject line followed by an indented block whose first non-blank line is a pipe row. Cell content is inline-parsed, not raw text.
 
 	Tables support cell spanning (colspan and rowspan), multi-line cells, footnotes, and organizational hints (alignment, header count) while staying true to lex's readability-first, minimal-syntax philosophy.
 
 Syntax
 
-	Tables follow the common head / content / tail pattern:
+	Tables follow the subject / indented-content pattern:
 
 		<subject-line>
 		    <pipe-rows>
 		    <blank-line>?
 		    <footnote-list>?
-		:: table <params>? ::
+		    <annotation>?
 	:: structure ::
 
 	Subject line:
@@ -26,8 +26,11 @@ Syntax
 	Footnote list:
 		An optional numbered list appearing after the last pipe row, separated by a blank line. Provides definitions for footnote references used in cell content.
 
-	Closing annotation:
-		`:: table <params>? ::` at the same indentation level as the subject line. Required. The label `table` identifies this block as a table. Parameters carry organizational hints.
+	Table annotation:
+		An optional `:: table <params>? ::` annotation inside the indented block, after the pipe rows (and footnotes, if any). Carries organizational hints (alignment, header count). When present, it attaches to the table element by the standard annotation attachment rules (closest element / container-end).
+
+	Detection:
+		A table is distinguished from other elements by its content: the first non-blank line inside the indented block starts and ends with a pipe character. No closing data line or special label is needed for detection.
 
 Rows and Cells
 
@@ -54,7 +57,7 @@ Headers
 		The first row is treated as the header. No separator line is needed.
 
 	Multiple header rows:
-		Use `header=N` in the closing annotation parameters to designate N header rows.
+		Use `header=N` in the table annotation parameters to designate N header rows.
 
 	No header:
 		Use `header=0` for headerless tables.
@@ -92,7 +95,7 @@ Multi-line Cells
 
 Organizational Hints (Parameters)
 
-	These live in the closing annotation parameters, outside the content.
+	These live in the table annotation parameters, inside the indented block.
 
 	Column alignment:
 		The `align` parameter uses a one-character-per-column shorthand:
@@ -121,7 +124,8 @@ Footnotes
 
 		    1. Measured on the test split, 10-fold cross-validated
 		    2. Median latency, p99 was 3x higher for Approach A
-		:: table align=lcc ::
+
+		    :: table align=lcc ::
 	:: lex ::
 
 	Footnote references inside a table block are table-scoped: they resolve to the footnote list within the same table block.
@@ -147,15 +151,11 @@ The Indentation Wall
 	Fullwidth mode:
 		When indentation steals too much horizontal space, content can drop to a fixed, absolute wall at column 2 (zero-based index 1). The parser detects this automatically when the first non-blank content line starts at that column.
 
-	The closing annotation stays aligned with the subject in both modes.
+Detection and Disambiguation
 
-Disambiguation from Verbatim Blocks
+	Tables are detected by content, not by a closing label. When the parser encounters a subject line followed by an indented block whose first non-blank line is a pipe row (starts and ends with `|`), it produces a Table node. This differs from verbatim blocks, which require a closing data line with a label.
 
-	Tables and verbatim blocks share identical outer structure (subject line + indented content + closing annotation). The closing annotation label determines the interpretation:
-	- Label `table` produces a Table node with inline-parsed pipe content.
-	- Any other label produces a Verbatim node with raw preserved content.
-
-	Detection happens at the verbatim matching stage. The parser attempts verbatim/table detection first in precedence order, which is correct: both require a closing annotation, and the label distinguishes them.
+	The table annotation (`:: table ... ::`) inside the block is optional and carries only organizational hints. It is not used for detection.
 
 Examples
 
@@ -187,7 +187,9 @@ Use Cases
 
 Implementation Notes
 
-	Tables reuse the verbatim block's outer structure: subject line detection, indentation wall handling (in-flow and fullwidth), and closing annotation parsing. The key difference is that table content is inline-parsed rather than preserved raw.
+	Tables are detected by content: a subject line whose first non-blank indented line is a pipe row. This replaces the previous approach of sharing verbatim block structure and distinguishing by closing annotation label.
+
+	Organizational hints (alignment, header count) are carried by a `:: table ::` annotation inside the block, which attaches to the table element via the standard annotation attachment rules.
 
 	Merge markers (`>>`, `^^`) are resolved during AST assembly: the content cell gets its colspan/rowspan incremented, and the absorbed cells are removed from the final AST. The serialized AST contains only content cells with their span counts.
 

@@ -3,4 +3,3 @@ Migration Example:
     |-------|-------|
     | Alice | 95    |
     | Bob   | 87    |
-:: table ::
