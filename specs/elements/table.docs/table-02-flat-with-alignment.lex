@@ -3,4 +3,5 @@ Test Scores:
     | Alice | 95    | A     |
     | Bob   | 87    | B+    |
     | Carol | 92    | A-    |
-:: table align=lcr ::
+
+    :: table align=lcr ::

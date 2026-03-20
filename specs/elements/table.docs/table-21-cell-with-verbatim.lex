@@ -6,4 +6,3 @@ Data:
     |          | :: python ::          |
 
     | Rust     | Just println.         |
-:: table ::

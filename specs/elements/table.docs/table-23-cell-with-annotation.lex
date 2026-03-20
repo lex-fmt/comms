@@ -5,4 +5,3 @@ Data:
     |        |     Important detail.  |
 
     | Beta   | Normal note.           |
-:: table ::

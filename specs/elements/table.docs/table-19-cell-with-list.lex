@@ -6,4 +6,3 @@ Data:
     |       | - Go             |
 
     | Bob   | Just text        |
-:: table ::

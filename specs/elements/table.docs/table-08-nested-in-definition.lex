@@ -7,4 +7,5 @@ HTTP Methods:
         | POST   | No         | No   |
         | PUT    | Yes        | No   |
         | DELETE | Yes        | No   |
-    :: table align=lcc ::
+
+        :: table align=lcc ::

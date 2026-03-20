@@ -4,4 +4,5 @@ Fullwidth Comparison Table:
  | Multi-line     | Blank-line rows  | Not supported    | Manual line wrap |
  | Footnotes      | Scoped lists     | Extension-only   | \tablefootnote   |
  | Alignment      | align=lcr param  | Separator line   | Column spec      |
-:: table align=llll ::
+
+ :: table align=llll ::

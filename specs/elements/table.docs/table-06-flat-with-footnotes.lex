@@ -6,4 +6,5 @@ Comparative Analysis of Retrieval Methods:
 
     1. Precision measured at k=10
     2. Weighted combination of BM25 and Dense
-:: table align=lccc ::
+
+    :: table align=lccc ::

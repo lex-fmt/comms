@@ -50,7 +50,8 @@ About
                 | Format   | Tables | Spanning |
                 | lex      | Native | Yes      |
                 | Markdown | Basic  | No       |
-            :: table align=lcc ::
+
+                :: table align=lcc ::
         Annotation:
             :: note :: This is a single-line annotation.
             

@@ -203,27 +203,27 @@ A Plain Text Format for Ideas
 
 9. Tables
 
-    Tables are incredibly useful for organizing data in a structured way. In Lex, tables are a native element: their cells support all inline formatting (*bold*, _emphasis_, `code`, references), and the formatter can auto-align columns for you. A table has a caption (a subject line ending with a colon), pipe-delimited rows, and a closing annotation with the `table` label.
+    Tables are incredibly useful for organizing data in a structured way. In Lex, tables are a native element: their cells support all inline formatting (*bold*, _emphasis_, `code`, references), and the formatter can auto-align columns for you. A table is a subject line (ending with a colon) followed by indented pipe-delimited rows.
 
     Some Jazz Records:
         | Name         | Year | Artist         |
         | Kind of Blue | 1959 | Miles Davis    |
         | Time Out     | 1959 | Dave Brubeck   |
         | Mingus Ah Um | 1959 | Charles Mingus |
-    :: table ::
 
-    By default, the first row is treated as a header. You can change this with the `header` parameter: `header=0` for no header, `header=2` for two header rows, and so on.
+    By default, the first row is treated as a header. You can change this with the `header` parameter in a `:: table ::` annotation: `header=0` for no header, `header=2` for two header rows, and so on.
 
     9.1 Alignment
 
-        Column alignment is specified via the `align` parameter, using one letter per column: `l` for left (the default), `c` for center, `r` for right.
+        Column alignment is specified via the `align` parameter in a `:: table ::` annotation inside the table block, using one letter per column: `l` for left (the default), `c` for center, `r` for right.
 
         Some Jazz Records:
             | Name         | Year | Artist         |
             | Kind of Blue | 1959 | Miles Davis    |
             | Time Out     | 1959 | Dave Brubeck   |
             | Mingus Ah Um | 1959 | Charles Mingus |
-        :: table align=lcl ::
+
+            :: table align=lcl ::
 
     9.2 Cell Merging
 
@@ -234,7 +234,6 @@ A Plain Text Format for Ideas
             | 9:00  | Opening Keynote | >>         |
             | 10:00 | Workshop        | Panel      |
             | 11:00 | ^^              | Discussion |
-        :: table ::
 
         Here the Opening Keynote spans both room columns, and the Workshop spans two time slots.
 
@@ -249,7 +248,6 @@ A Plain Text Format for Ideas
             |         | after 48 hours  |
 
             | Trial 2 | No growth       |
-        :: table ::
 
     9.4 Inline Formatting
 
@@ -260,7 +258,8 @@ A Plain Text Format for Ideas
             | *Polymorphism*    | Multiple forms of a single interface |
             | `print()`         | Output to standard out               |
             | #E = mc^2#        | Mass-energy equivalence              |
-        :: table align=ll ::
+
+            :: table align=ll ::
 
 10. Annotations
 

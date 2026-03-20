@@ -5,4 +5,3 @@ Data:
     |           |     Temporary data kept in RAM. |
 
     | Queue     | Simple FIFO structure.         |
-:: table ::

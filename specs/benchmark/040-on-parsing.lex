@@ -173,7 +173,6 @@ Useful Mental Models when Parsing Lex
   | Header A | Header B |
   |----------|----------|
   | Cell A   | Cell B   |
-            :: table ::
 
             The use of 2 is to precisely make clear that no valid indentation is possible but stretched, and this is detected on parsing the first non-blank content line (see the verbatim spec for details).
 

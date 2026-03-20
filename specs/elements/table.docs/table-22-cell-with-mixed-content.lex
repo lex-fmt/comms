@@ -8,4 +8,3 @@ Data:
     |       | Also knows C++.      |
 
     | Bob   | Just plain text.     |
-:: table ::

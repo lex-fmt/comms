@@ -8,4 +8,5 @@
                 | /users     | GET    | Required |
                 | /users/:id | GET    | Required |
                 | /login     | POST   | None     |
-            :: table align=llc ::
+
+                :: table align=llc ::
