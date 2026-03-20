@@ -55,7 +55,6 @@ Proposal: The Table Element
             | Bob    | Cats |
             | Alice  | Dogs |
         :: table ::
-    :: lex ::
 
     2.2 Full Example
 
@@ -69,7 +68,6 @@ Proposal: The Table Element
             1. Precision measured at k=10
             2. Weighted combination of BM25 and Dense, weights in [#3.2]
         :: table align=lccc ::
-    :: lex ::
 
 3. Rows and Cells
 
@@ -78,7 +76,6 @@ Proposal: The Table Element
         Each row is a pipe-delimited line. Leading and trailing pipes are required.
 
             | cell content | another cell | third cell |
-        :: lex ::
 
         - Cells are delimited by `|`.
         - Cell content is trimmed of surrounding whitespace.
@@ -93,11 +90,9 @@ Proposal: The Table Element
 
             | Name  | Score |
             | Alice | 95    |
-        :: lex ::
 
             | Name | Score |
             | Alice | 95 |
-        :: lex ::
 
     3.3 Mismatched Row Lengths
 
@@ -105,7 +100,6 @@ Proposal: The Table Element
 
             | Name  | Age | City     |
             | Alice | 30  |
-        :: lex ::
 
         The second row implicitly becomes `| Alice | 30 |  |`.
 
@@ -118,7 +112,6 @@ Proposal: The Table Element
             | Name  | Age | City     |
             | Alice | 30  | New York |
             | Bob   | 25  | Paris    |
-        :: lex ::
 
         The first row ("Name | Age | City") is the header. No `|---|` required.
 
@@ -131,7 +124,6 @@ Proposal: The Table Element
             | North  | 10     | 20     | 30     |
             | South  | 15     | 25     | 35     |
         :: table header=2 ::
-    :: lex ::
 
     4.3 No Header
 
@@ -140,7 +132,6 @@ Proposal: The Table Element
             | Alice | 95 |
             | Bob   | 87 |
         :: table header=0 ::
-    :: lex ::
 
 5. Cell Merging
 
@@ -152,7 +143,6 @@ Proposal: The Table Element
 
             | Experiment Results | >>       | Control |
             | Temperature        | Pressure | pH      |
-        :: lex ::
 
         "Experiment Results" spans 2 columns. The `>>` cell is absorbed into it.
 
@@ -160,7 +150,6 @@ Proposal: The Table Element
 
             | Full Width Title | >>       | >>       | >>       |
             | A                | B        | C        | D        |
-        :: lex ::
 
         This preserves the column grid: every row has the same number of `|` delimiters, so columns always line up visually.
 
@@ -172,7 +161,6 @@ Proposal: The Table Element
             | Group A  | 10    |
             | ^^       | 20    |
             | Group B  | 30    |
-        :: lex ::
 
         "Group A" spans 2 rows. The `^^` cell is absorbed into it.
 
@@ -182,7 +170,6 @@ Proposal: The Table Element
 
             | Merged | >>    | Other |
             | ^^     | ^^    | More  |
-        :: lex ::
 
         This is a 2x2 merge. Chain resolution: cell(2,2) `^^` -> cell(1,2) `>>` -> cell(1,1) = "Merged". The merge region is always rectangular.
 
@@ -193,7 +180,6 @@ Proposal: The Table Element
             | Group  | 10     | 20     | 30     | 40     | 50     |
             | ^^     | 15     | 25     | 35     | 45     | 55     |
         :: table header=2 ::
-    :: lex ::
 
         "Q1" spans 3 columns. "Q2" spans 3 columns. "Group" spans 2 rows.
 
@@ -214,7 +200,6 @@ Proposal: The Table Element
                 | Alice | 95    |
                 | Bob   | 87    |
             :: table ::
-        :: lex ::
 
     6.2 Multi-line Mode
 
@@ -228,7 +213,6 @@ Proposal: The Table Element
 
                 | Trial 2 | 25°C, pH 6.8 | No growth detected.   |
             :: table ::
-        :: lex ::
 
         Rules:
         - Each blank-line-delimited group of pipe lines forms one row.
@@ -263,7 +247,6 @@ Proposal: The Table Element
         - `r` = right
 
             :: table align=lcr ::
-        :: lex ::
 
         This means: first column left, second center, third right. If fewer characters than columns, remaining columns default to left.
 
@@ -297,7 +280,6 @@ Proposal: The Table Element
                 1. Measured on the test split, 10-fold cross-validated
                 2. Median latency, p99 was 3x higher for Approach A
             :: table align=lcc ::
-        :: lex ::
 
     8.2 Scoping
 
@@ -314,7 +296,6 @@ Proposal: The Table Element
         | Name  | Score |
         |-------|-------|
         | Alice | 95    |
-    :: lex ::
 
     This eases migration from markdown and allows authors to include visual separators for readability when they prefer them. The parser simply skips these lines during row extraction. No alignment information is derived from separator lines (alignment lives in the `align` parameter).
 

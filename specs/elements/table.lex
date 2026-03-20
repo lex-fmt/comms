@@ -37,7 +37,6 @@ Rows and Cells
 	Each row is a pipe-delimited line. Leading and trailing pipes are required:
 
 		| cell content | another cell | third cell |
-	:: lex ::
 
 	Rules:
 		- Cells are delimited by `|`.
@@ -141,7 +140,6 @@ Footnotes
 		    2. Median latency, p99 was 3x higher for Approach A
 
 		    :: table align=lcc ::
-	:: lex ::
 
 	Footnote references inside a table block are table-scoped: they resolve to the footnote list within the same table block.
 
@@ -152,7 +150,6 @@ Separator Lines
 		| Name  | Score |
 		|-------|-------|
 		| Alice | 95    |
-	:: lex ::
 
 	This eases migration from markdown. No alignment information is derived from separator lines; alignment lives in the `align` parameter.
 

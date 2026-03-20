@@ -17,46 +17,38 @@ Document Title
     6. A line ending with a colon followed directly by a blank line (no second line) is a plain title whose content includes the colon.
     7. Inline formatting is supported in both title and subtitle.
 
-    :: lex ::
-
-    Example: Explicit Title
+    Explicit title:
         My Document Title
 
         Content starts here.
-    :: lex ::
 
-    Example: Title with Subtitle
+    Title with subtitle:
         My Document Title:
         A Closer Look at the Subject
 
         Content starts here.
-    :: lex ::
 
-    Example: Title with Subtitle and Inline Formatting
+    Title with subtitle and inline formatting:
         *Sapiens*:
         A Brief History of _Humankind_
 
         In the beginning, there were humans.
-    :: lex ::
 
-    Example: Title Ending with Colon (No Subtitle)
+    Title ending with colon (no subtitle):
         Warning: Do Not Enter
 
         Content starts here.
-    :: lex ::
 
     Note on the previous example: the title line ends with a colon, but because the next line is not a subtitle continuation (it is a blank line), the entire line including the colon is the title text. The colon only triggers subtitle parsing when a non-blank, non-indented line immediately follows.
 
-    Example: Not a Title (No blank line)
+    Not a title (no blank line):
         Not a title
         Because no blank line follows.
-    :: lex ::
 
-    Example: Not a Title (Indented)
+    Not a title (indented):
         Not a title
 
         Because it is indented (this would be a code block or continuation).
-    :: lex ::
 
     Disambiguation:
         Title vs. subtitle depends on the combination of trailing colon and the presence of a second line:
