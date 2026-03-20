@@ -93,6 +93,21 @@ Multi-line Cells
 
 	The header is the first group (before the first blank line) in multi-line mode.
 
+Block Content in Cells
+
+	Table cells can contain block-level elements, not just inline text. In multi-line mode, cell content spanning multiple lines can include lists, definitions, and other structural elements. The same nesting rules that apply to lex in general apply inside cells:
+
+	Allowed in cells:
+		All elements except sessions (which are structural skeleton) and annotations-within-annotations. Specifically, cells can contain paragraphs, lists, definitions, verbatim blocks, and annotations.
+
+	This makes tables first-class containers — a cell is not a terminal node. The table structure is fully traversable: tools (LSP outline, breadcrumbs, text objects) descend into table rows, cells, and their nested content.
+
+	Examples:
+		- Cell with list: specs/elements/table.docs/table-19-cell-with-list.lex
+		- Cell with definition: specs/elements/table.docs/table-20-cell-with-definition.lex
+		- Cell with verbatim: specs/elements/table.docs/table-21-cell-with-verbatim.lex
+		- Cell with mixed content: specs/elements/table.docs/table-22-cell-with-mixed-content.lex
+
 Organizational Hints (Parameters)
 
 	These live in the table annotation parameters, inside the indented block.
@@ -194,3 +209,5 @@ Implementation Notes
 	Merge markers (`>>`, `^^`) are resolved during AST assembly: the content cell gets its colspan/rowspan incremented, and the absorbed cells are removed from the final AST. The serialized AST contains only content cells with their span counts.
 
 	The footnote section check operates on the raw text before inline parsing. If the raw text is exactly `\>>` or `\^^`, the structural span check ignores it; the escape is processed during subsequent inline parsing.
+
+	Tables are not terminal nodes. All AST traversal methods (element_at, node_path_at_position, descendants) descend into table rows, cells, and their block-level children. The LSP document symbol tree includes rows and cells as intermediate symbols. In tree-sitter, tables parse as definitions containing table_row > table_cell > text_content nodes.
