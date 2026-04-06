@@ -105,8 +105,8 @@ Inline Token Grammar for lex
 			[@author2023; @other2024, p. 10]
 
 		Annotation Reference:
-			[^note1]
-			[^important-caveat]
+			[::note1]
+			[::important-caveat]
 
 		Footnote Reference (Numbered):
 			[42]
@@ -176,7 +176,7 @@ Inline Token Grammar for lex
 		0. NotSure: Empty or no alphanumeric characters (e.g., "!!!") — checked first as early return
 		1. TK Reference: "TK" or "TK-identifier" (case insensitive for prefix; identifier must be lowercase ASCII + digits, max 20 characters)
 		2. Citation: Starts with "@" followed by citation parsing
-		3. Annotation Reference: Starts with "^" followed by non-empty label
+		3. Annotation Reference: Starts with "::" followed by non-empty label
 		4. Session: Starts with "#" followed by digits, dots, or dashes only
 		5. URL: Starts with "http://", "https://", or "mailto:"
 		6. File: Starts with "." or "/"

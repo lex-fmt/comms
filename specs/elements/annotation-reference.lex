@@ -8,23 +8,23 @@ Introduction
 
 Syntax
 
-	Pattern: `[^<label>]`
-	Examples: `[^source]`, `[^important-caveat]`, `[^methodology-note]`
+	Pattern: `[::<label>]`
+	Examples: `[::source]`, `[::important-caveat]`, `[::methodology-note]`
 
-	The caret (^) prefix inside brackets distinguishes annotation references from other reference types. The label after the caret matches the label of a `:: label ::` annotation.
+	The `::` prefix inside brackets mirrors the `:: label ::` annotation marker syntax, making the connection between the reference and its target visually clear. The label after `::` matches the label of a `:: label ::` annotation.
 
 Resolution
 
-	An annotation reference `[^label]` resolves to the annotation whose label matches, case-insensitively.
+	An annotation reference `[::label]` resolves to the annotation whose label matches, case-insensitively.
 
 	Example:
 
-		This approach has known limitations [^caveat].
+		This approach has known limitations [::caveat].
 
 		:: caveat ::
 			The method assumes uniform distribution, which rarely holds in practice.
 
-	The reference `[^caveat]` resolves to the `:: caveat ::` annotation above.
+	The reference `[::caveat]` resolves to the `:: caveat ::` annotation above.
 
 	If no annotation with a matching label exists, the reference is unresolved. This produces a diagnostic warning but is not a parse error.
 
@@ -33,7 +33,7 @@ Use Cases
 	Inline commentary:
 		A way to attach a remark to a specific word or phrase, without interrupting the flow.
 
-		The algorithm converges in O(n log n) time [^proof-sketch].
+		The algorithm converges in O(n log n) time [::proof-sketch].
 
 		:: proof-sketch ::
 			See Appendix B for the full induction argument.
@@ -41,7 +41,7 @@ Use Cases
 	Authoring notes:
 		Collaborators can reference annotations that carry review comments, status, or questions.
 
-		The API surface is now stable [^api-review].
+		The API surface is now stable [::api-review].
 
 		:: api-review status=approved ::
 			Reviewed by the platform team on 2025-03-15.
@@ -49,7 +49,7 @@ Use Cases
 	Tool metadata:
 		Annotations can carry structured parameters. An annotation reference lets prose point to that metadata for tools to act on.
 
-		Deploy the updated configuration [^deploy-config].
+		Deploy the updated configuration [::deploy-config].
 
 		:: deploy-config env=staging ::
 			Requires feature flag `new-auth` to be enabled.
@@ -63,7 +63,7 @@ Differences from Footnotes
 		- Suited for supplementary information at the end of a section or document
 
 	Annotation references:
-		- Use labeled references: `[^label]`
+		- Use `::` references: `[::label]`
 		- Target individual `:: label ::` annotations
 		- Resolved document-wide by label matching
 		- Suited for precise, named pointers to metadata or commentary

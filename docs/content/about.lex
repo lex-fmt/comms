@@ -74,7 +74,7 @@ About
         - `[https://example.com]` - URLs
         - `[@author2024]` - Citations
         - `[42]` - Footnotes
-        - `[^label]` - Annotation references
+        - `[::label]` - Annotation references
         - `[#2.1]` - Session references
         - `[./file.txt]` - File references
         - `[TK-placeholder]` - Placeholders

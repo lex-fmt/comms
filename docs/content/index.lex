@@ -14,7 +14,7 @@ Home
         lex trusts spatial layout. Nested sessions such as [#3.2] require no extra syntax beyond indentation and numbering.
 
     Durable Ideas:
-        Documents are UTF-8 text. No binary containers, no proprietary schema—just files that will still open in decades.[^durable]
+        Documents are UTF-8 text. No binary containers, no proprietary schema—just files that will still open in decades.[::durable]
 
 3. Lex In Practice
 

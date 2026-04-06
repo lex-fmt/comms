@@ -2,7 +2,7 @@
 
 1. Intro
 
-    Welcome to *Lex* _format_ with `code` and #math# plus references [^source] and [@spec2025 p.4] and [Cache].
+    Welcome to *Lex* _format_ with `code` and #math# plus references [::source] and [@spec2025 p.4] and [Cache].
 
     Cache:
         A definition body referencing [Cache].

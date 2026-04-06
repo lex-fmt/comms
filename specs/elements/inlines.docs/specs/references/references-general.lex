@@ -30,7 +30,7 @@ Complete specification for the general reference system - the foundation for lin
             [http://example.com]
             [file.txt]
             [@citation-key]
-            [^footnote-id]
+            [::annotation-id]
         :: reference-pattern
 
     2.2. Content-Based Type Resolution
@@ -110,13 +110,13 @@ Complete specification for the general reference system - the foundation for lin
     3.6. Annotation References
 
         Labeled references that point to an annotation by label:
-            [^note1]
-            [^detailed-explanation]
-            [^methodology-note]
+            [::note1]
+            [::detailed-explanation]
+            [::methodology-note]
         :: annotation-reference
 
         Purpose: Precise pointers to individual `:: label ::` annotations.
-        The caret (^) prefix distinguishes annotation references from other reference types. Resolution is by label matching, case-insensitive.
+        The `::` prefix mirrors the annotation marker syntax, distinguishing annotation references from other reference types. Resolution is by label matching, case-insensitive.
 
     3.7. TK (To Come) References
 
@@ -191,7 +191,7 @@ Complete specification for the general reference system - the foundation for lin
             <footnote-ref> = <left-bracket> <footnote-number> <right-bracket>
 
         Annotation reference:
-            <annotation-ref> = <left-bracket> <caret> <annotation-label> <right-bracket>
+            <annotation-ref> = <left-bracket> '::' <annotation-label> <right-bracket>
         :: grammar
 
 6. AST Structure
@@ -234,7 +234,7 @@ Complete specification for the general reference system - the foundation for lin
         Reference type determination order:
         1. TK patterns (`TK` or `TK-identifier`)
         2. Citation patterns (`@key`)
-        3. Annotation reference patterns (`^label`)
+        3. Annotation reference patterns (`::label`)
         4. Session patterns (`#number`)
         5. URL patterns (protocol or domain)
         6. File patterns (starts with `.` or `/`)

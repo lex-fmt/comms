@@ -185,7 +185,7 @@ Forms:
 | URL | Link | `[https://example.com]` |
 | `@key` | Citation | `[@author2024, pp. 42-45]` |
 | Number | Footnote | `[1]` |
-| `^label` | Annotation ref | `[^important]` |
+| `::label` | Annotation ref | `[::important]` |
 | `#num` | Section ref | `[#2.1]` |
 | Path | File ref | `[./data.csv]` |
 | `TK-*` | Placeholder | `[TK-figure]` |

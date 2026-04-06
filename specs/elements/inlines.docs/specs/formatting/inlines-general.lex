@@ -74,7 +74,7 @@ Foundation specification for inline elements - the general token-based syntax pa
             <page-ref> = <left-bracket> <page-locator> <right-bracket>
             <session-ref> = <left-bracket> <hash> <session-number> <right-bracket>
             <footnote-ref> = <left-bracket> <footnote-number> <right-bracket>
-            <annotation-ref> = <left-bracket> <caret> <annotation-label> <right-bracket>
+            <annotation-ref> = <left-bracket> '::' <annotation-label> <right-bracket>
         :: grammar
 
     4.2. Content Rules

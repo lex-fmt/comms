@@ -375,9 +375,9 @@ A Plain Text Format for Ideas
 
     13.6 Annotation References
 
-        For pointing to a specific annotation by label. The caret (^) prefix inside brackets identifies annotation references.
+        For pointing to a specific annotation by label. The `::` prefix inside brackets identifies annotation references, mirroring the `:: label ::` annotation syntax.
 
-        See the caveat [^important-caveat].
+        See the caveat [::important-caveat].
 
     13.7 TK (To Come) References
 
