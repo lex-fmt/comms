@@ -404,5 +404,7 @@ A Plain Text Format for Ideas
 
 Notes
 
+    :: notes ::
+
     1. Parameters are structured metadata written as `key=value` pairs, separated by commas, and placed inside the Lex markers (`::`) after the label. Keys follow the pattern `letter (letter | digit | "_" | "-")*`, so things like `severity`, `ref-id`, or `api_version` are valid. Values can be unquoted (letters, digits, dashes, periods only, like `high` or `3.11`) or quoted (any text, like `"Hello World"` or `"path with spaces"`). Inside quoted values, use `\"` for a literal quote and `\\` for a literal backslash. For example: `:: warning severity=high ::`, `:: image src="angkorwat.jpg" ::`, or `:: author name="Jane Doe" ::`. Parameters are used in verbatim blocks [#8] and annotations [#10] to provide tooling with structured information beyond the label.
     2. Labels follow the pattern `letter (letter | digit | "_" | "-" | ".")*`. Valid labels include `note`, `warning`, `javascript`, `code-example`, `api_endpoint`, and even dotted namespaces like `build.debug` or `lint.ignore`. Labels must start with a letter and cannot contain colons or slashes. Dotted namespaces are useful for tool-specific annotations, letting different systems coexist without collision.

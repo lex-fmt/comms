@@ -21,6 +21,8 @@
     :: shell language=bash ::
 
 Notes
-    
-1. Footnote forty two for bullet.
-2. Footnote referenced in text.
+
+    :: notes ::
+
+    1. Footnote forty two for bullet.
+    2. Footnote referenced in text.

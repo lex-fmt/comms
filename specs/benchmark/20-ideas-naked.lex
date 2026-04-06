@@ -135,4 +135,6 @@ Ideas, Naked
 
 Notes
 
+    :: notes ::
+
     1. Citations format hook into established citation management systems as BibTeX and Zotero standards.
