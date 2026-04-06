@@ -88,8 +88,8 @@ Inline Token Grammar for lex
 
 		<reference> = '[' <literal-text>+ ']'
 
-		Reference to external resources, citations, or footnotes. Content is treated literally
-		but is post-processed to determine reference type.
+		Reference to external resources, citations, footnotes, or annotations. Content is treated
+		literally but is post-processed to determine reference type.
 
 		Reference Types (determined by content pattern):
 
@@ -104,7 +104,7 @@ Inline Token Grammar for lex
 			[@doe2024, pp. 42-45]
 			[@author2023; @other2024, p. 10]
 
-		Footnote Reference (Labeled):
+		Annotation Reference:
 			[^note1]
 			[^important-caveat]
 
@@ -176,7 +176,7 @@ Inline Token Grammar for lex
 		0. NotSure: Empty or no alphanumeric characters (e.g., "!!!") — checked first as early return
 		1. TK Reference: "TK" or "TK-identifier" (case insensitive for prefix; identifier must be lowercase ASCII + digits, max 20 characters)
 		2. Citation: Starts with "@" followed by citation parsing
-		3. Footnote (Labeled): Starts with "^" followed by non-empty label
+		3. Annotation Reference: Starts with "^" followed by non-empty label
 		4. Session: Starts with "#" followed by digits, dots, or dashes only
 		5. URL: Starts with "http://", "https://", or "mailto:"
 		6. File: Starts with "." or "/"

@@ -49,7 +49,7 @@ This document demonstrates all semantic token types emitted by lex-lsp and serve
         1. Numbered markers work the same way
         2. They help readers scan document structure
 
-        References use muted color with underline: [^footnote], [@citation], [Cache]
+        References use muted color with underline: [^annotation], [@citation], [Cache]
 
         Cache:
             A definition entry that can be referenced for navigation testing.
@@ -109,7 +109,9 @@ This document demonstrates all semantic token types emitted by lex-lsp and serve
     ReferenceCitation:
         Citations [@like this] (muted + underline)
     ReferenceFootnote:
-        Footnotes [^like this] or [1] (muted + underline)
+        Footnotes [1] (muted + underline)
+    ReferenceAnnotation:
+        Annotation references [^like this] (muted + underline)
     VerbatimSubject:
         Label before :: in code blocks (faint)
     DataLabel:

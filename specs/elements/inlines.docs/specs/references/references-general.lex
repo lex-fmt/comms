@@ -98,25 +98,27 @@ Complete specification for the general reference system - the foundation for lin
 
     3.5. Footnote References
 
-        Footnote and annotation links support two formats:
-
-        Naked numerical format:
+        Numbered references to footnote definitions in a `:: notes ::` list:
             [1]
             [2]
             [42]
-        :: footnote-naked
+        :: footnote-numbered
 
-        Labeled format with caret prefix:
+        Purpose: Supplementary information collected in a notes list.
+        Footnote definitions are list items inside a list preceded by a `:: notes ::` annotation (see footnotes.lex).
+
+    3.6. Annotation References
+
+        Labeled references that point to an annotation by label:
             [^note1]
             [^detailed-explanation]
             [^methodology-note]
-        :: footnote-labeled
+        :: annotation-reference
 
-        Purpose: Footnotes and supplementary information
-        
-        The caret (^) prefix distinguishes labeled footnotes from naked numerical footnotes and other reference types.
+        Purpose: Precise pointers to individual `:: label ::` annotations.
+        The caret (^) prefix distinguishes annotation references from other reference types. Resolution is by label matching, case-insensitive.
 
-    3.6. TK (To Come) References
+    3.7. TK (To Come) References
 
         Placeholder references for future content:
             [TK]                    # Naked TK reference
@@ -127,7 +129,7 @@ Complete specification for the general reference system - the foundation for lin
 
         Purpose: Content placeholders and development markers
 
-    3.7. Not Sure References
+    3.8. Not Sure References
 
         Unresolved or ambiguous references:
             [ambiguous-content]     # Cannot determine type
@@ -186,9 +188,10 @@ Complete specification for the general reference system - the foundation for lin
             <session-ref> = <left-bracket> <hash> <session-number> <right-bracket>
 
         Footnote reference:
-            <footnote-ref> = <footnote-naked> | <footnote-labeled>
-            <footnote-naked> = <left-bracket> <footnote-number> <right-bracket>
-            <footnote-labeled> = <left-bracket> <caret> <footnote-label> <right-bracket>
+            <footnote-ref> = <left-bracket> <footnote-number> <right-bracket>
+
+        Annotation reference:
+            <annotation-ref> = <left-bracket> <caret> <annotation-label> <right-bracket>
         :: grammar
 
 6. AST Structure
@@ -210,8 +213,8 @@ Complete specification for the general reference system - the foundation for lin
         │   ├── File(PathData)
         │   ├── Session(SessionRef)
         │   ├── Citation(CitationData)
-        │   ├── FootnoteNaked(u32)
-        │   ├── FootnoteLabeled(String)
+        │   ├── FootnoteNumber(u32)
+        │   ├── AnnotationReference(String)
         │   ├── TK(TKData)
         │   ├── NotSure(String)
         │   └── General(String)
@@ -231,12 +234,12 @@ Complete specification for the general reference system - the foundation for lin
         Reference type determination order:
         1. TK patterns (`TK` or `TK-identifier`)
         2. Citation patterns (`@key`)
-        3. Footnote labeled patterns (`^id`)
+        3. Annotation reference patterns (`^label`)
         4. Session patterns (`#number`)
         5. URL patterns (protocol or domain)
         6. File patterns (starts with `.` or `/`)
-        7. Footnote naked patterns (pure digits)
-        8. Not Sure (default fallback)
+        7. Footnote numbered patterns (pure digits)
+        8. General (default fallback)
 
     7.3. Validation Rules
 

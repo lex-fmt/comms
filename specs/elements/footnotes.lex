@@ -2,83 +2,152 @@ Footnotes
 
 Introduction
 
-	Footnotes are used to provide additional information, citations, or comments without interrupting the main flow of the text.
-	In Lex, footnotes are implemented as a combination of inline references and a corresponding list of definitions at the end of the document.
+	Footnotes provide supplementary information — citations, asides, clarifications — without interrupting the main text. They consist of two parts: inline numbered references in the prose and a collected list of definitions elsewhere in the document.
 
-Syntax
+	Lex footnotes use an explicit annotation (`:: notes ::`) to mark which list holds the definitions. This avoids heuristics (title matching, positional guessing) and enables multiple independent footnote scopes within a single document.
 
-	Reference:
-		The inline reference is denoted by a number enclosed in square brackets.
-		Pattern: `[<integer>]`
+	Table-scoped footnotes are a separate mechanism, handled by positional lists inside the table block (see table.lex).
 
-	Definition:
-		Footnote definitions are collected in a specific "Notes" session at the end of the document.
-		The definitions themselves are formatted as a **List**.
+References
 
-		Notes
+	Inline references point readers to a footnote definition.
 
-			1. First footnote content.
-			2. Second footnote content.
+	Pattern: `[<integer>]`
+	Examples: `[1]`, `[42]`
 
-	Key Requirements:
-	1.  **Notes Session**: The definitions MUST be contained within a session, typically named "Notes", located at the end of the document.
-	2.  **List Format**: The definitions themselves MUST be formatted as list items.
-	3.  **Numbering**: The list item markers (1., 2., etc.) correspond to the inline reference numbers.
+	The integer corresponds to a list item in a `:: notes ::`-annotated list.
 
-Content
+		This claim needs support [1]. Others have noted the same [2].
 
-	Footnote list items can contain any block element that is valid within a list item, including:
-	-   Paragraphs
-	-   Nested lists
-	-   Verbatim blocks
-	-   Definitions
+Definitions
+
+	Footnote definitions are list items inside a list preceded by a `:: notes ::` annotation. The annotation marks the first list that follows it in the same container as the footnote list.
+
+	Syntax:
+		:: notes ::
+
+		1. First footnote content.
+		2. Second footnote content.
+
+	The `:: notes ::` annotation uses marker form (no content). It attaches to the list that follows it per the standard annotation attachment rules.
+
+	The list itself is a regular numbered list. Its items can contain any content valid within list items: paragraphs, nested lists, verbatim blocks, definitions.
 
 	Example with mixed content:
 
+		:: notes ::
+
+		1. Simple note.
+		2. Note with a paragraph.
+
+		    This is the second paragraph of the second note.
+
+		3. Note with code:
+		        print("Hello")
+		    :: python ::
+
+Scoping
+
+	A document can have multiple `:: notes ::` lists at different levels of nesting. Footnote references resolve to the nearest enclosing scope that contains a `:: notes ::`-annotated list.
+
+	Resolution walks up the container hierarchy from the reference (list item, definition, session, document root) until it finds a container with a `:: notes ::` list. Sessions without their own `:: notes ::` list are transparent — resolution continues upward through them.
+
+	Document-scoped:
+		A `:: notes ::` list at the document root (or in a top-level session) serves as the default scope. References anywhere in the document that aren't covered by a narrower scope resolve here.
+
+	Section-scoped:
+		A `:: notes ::` list inside a session scopes to that session. References within the session resolve to it; references outside do not.
+
+		1. Chapter One
+
+			Content with a reference [1].
+
+			:: notes ::
+
+			1. This note belongs to Chapter One.
+
+		2. Chapter Two
+
+			Content with a reference [1].
+
+			:: notes ::
+
+			1. This note belongs to Chapter Two.
+
+	If no `:: notes ::` list is found in any enclosing container, the reference is unresolved.
+
+Diagnostics
+
+	Footnote diagnostics are warnings, not parse errors. A document with mismatches is still valid lex.
+
+	Missing definition:
+		A numbered reference `[N]` with no matching item in any reachable `:: notes ::` list produces a warning.
+
+	Unused definition:
+		A `:: notes ::` list item with no matching reference is valid. This supports drafting workflows where definitions are written before references are added.
+
+	Scope mismatch:
+		A reference that can only reach a `:: notes ::` list in a sibling or unrelated container does not resolve. It is treated as missing.
+
+Session Wrapper
+
+	The `:: notes ::` annotation can appear at any level — inside a session or at the document root. A wrapping session (titled "Notes" or otherwise) is optional and carries no semantic weight. It exists purely for document organization.
+
+	With session wrapper (common for end-of-document notes):
+
 		Notes
 
-			1. Simple note.
-			2. Note with a paragraph.
-			    
-			    This is the second paragraph of the second note.
+			:: notes ::
 
-			3. Note with code.
-			    The code:
-			        print("Hello")
+			1. First note.
+			2. Second note.
 
-Legacy Support (Deprecated)
+	Without session wrapper (valid, works the same):
 
-	Previously, footnotes were sometimes formatted as nested sessions.
-	
-	Notes
+		:: notes ::
 
-		1. Note Title
-		
-			Note content.
-
-	This format is deprecated in favor of the cleaner list syntax. Tools may automatically convert legacy formats to the new list format.
+		1. First note.
+		2. Second note.
 
 Examples
 
-	Standard Footnotes:
+	Standard document footnotes:
 
 		Here is a reference [1] and another [2].
 
-		Notes
+		:: notes ::
 
-			1. This is the first note.
-			2. This is the second note.
+		1. This is the first note.
+		2. This is the second note.
 
-	Complex Footnotes:
+	Per-section footnotes in a longer document:
 
-		See the code [1].
+		Introduction
 
-		Notes
+			The method was first proposed in 2019 [1].
 
-			1. The implementation details:
-				
-				:: Rust ::
+			:: notes ::
+
+			1. Original paper: Smith et al., 2019.
+
+		Results
+
+			Performance improved significantly [1].
+
+			:: notes ::
+
+			1. See Table 3 for detailed metrics.
+
+	Complex footnotes with rich content:
+
+		See the implementation [1].
+
+		:: notes ::
+
+		1. The implementation details:
+
+			Main entry point:
 				fn main() {
 				    println!("Footnote code");
 				}
-
+			:: rust ::

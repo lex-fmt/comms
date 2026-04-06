@@ -369,27 +369,30 @@ A Plain Text Format for Ideas
 
     13.5 Footnote References
 
-        For adding supplementary notes. There are two forms: numbered, using a plain integer, and labeled, starting with ^.
+        For adding supplementary notes. Footnotes use numbered references that link to a corresponding entry in a `:: notes ::` list (see [#Notes]).
 
         This claim needs support [1].
+
+    13.6 Annotation References
+
+        For pointing to a specific annotation by label. The caret (^) prefix inside brackets identifies annotation references.
+
         See the caveat [^important-caveat].
 
-        Numbered footnotes link to a corresponding entry in a Notes session at the end of the document (see [#Notes]).
-
-    13.6 TK (To Come) References
+    13.7 TK (To Come) References
 
         A placeholder for content that is not yet written. TK stands for "to come" and is a common convention in publishing.
 
         The implementation details are [TK].
         The benchmarks section is [TK-benchmarks].
 
-    13.7 Not Sure References
+    13.8 Not Sure References
 
         When you're not sure what to reference, or want to flag something for later.
 
         This needs a source [!!!].
 
-    13.8 General References
+    13.9 General References
 
         Any other text inside brackets becomes a general reference, useful for cross-referencing by name.
 

@@ -4,7 +4,7 @@
 
 Foundation specification for inline elements - the general token-based syntax pattern and parsing architecture shared by all inline content in lex documents.
 
-:: note :: This specification defines the foundational token-based pattern shared by all inline elements. For specific implementations see: [formatting.lex] (strong, emphasis, code), [math.lex] (mathematical expressions), and [references/] (links, citations, footnotes).
+:: note :: This specification defines the foundational token-based pattern shared by all inline elements. For specific implementations see: [formatting.lex] (strong, emphasis, code), [math.lex] (mathematical expressions), and [references/] (links, citations, footnotes, annotation references).
 
 1. Purpose
 
@@ -73,7 +73,8 @@ Foundation specification for inline elements - the general token-based syntax pa
             <citation-span> = <left-bracket> <at-sign> <citation-keys> <citation-locator>? <right-bracket>
             <page-ref> = <left-bracket> <page-locator> <right-bracket>
             <session-ref> = <left-bracket> <hash> <session-number> <right-bracket>
-            <footnote-ref> = <footnote-naked> | <footnote-labeled>
+            <footnote-ref> = <left-bracket> <footnote-number> <right-bracket>
+            <annotation-ref> = <left-bracket> <caret> <annotation-label> <right-bracket>
         :: grammar
 
     4.2. Content Rules
