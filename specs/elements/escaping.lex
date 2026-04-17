@@ -110,6 +110,38 @@ Feature: Escaping
 		are processed. The only significant characters are the closing :: label :: marker,
 		which must match the opening label.
 
+	3.4. Structural Parsers
+
+		When a parser treats a character as a structural delimiter (e.g. the pipe in a
+		table row, the comma or semicolon in a citation key list), it MUST honor `\<char>`
+		as a literal (not-a-boundary) sequence and strip the escaping backslash from the
+		resulting segment text. Even numbers of backslashes leave the delimiter structural
+		(`\\|` is a literal backslash followed by a structural pipe).
+
+		Parsers MAY additionally recognize balanced literal regions (for example,
+		backtick-delimited inline code inside a table cell) in which delimiters never
+		split and backslashes pass through verbatim.
+
+		Rationale:
+			Inline escape resolution (§1) runs after structural parsing, so it cannot
+			help a parser that has already split on a character. The structural layer
+			that consumes the character must resolve its own escape.
+
+		Implementation:
+			The lex-core::escape module provides
+			- `split_respecting_escape(s, sep)`
+			- `split_respecting_escape_and_literals(s, sep, literal_delim)`
+			- `split_respecting_escape_with_ranges(s, sep, literal_delim)`
+			- `find_respecting_escape(s, needle)` / `find_respecting_escape_and_literals`
+			- `is_structural_at(bytes, pos, literal_delim)`
+			Using these utilities is the expected way to handle structural delimiters;
+			naive `.split()` or `.find()` on a structural delimiter is a bug.
+
+		Rule for new structural characters:
+			Whenever Lex introduces a new structural character, the parser layer that
+			treats it structurally must be taught to honor `\<char>` via these utilities.
+			Downstream inline escape resolution is not a substitute; it runs too late.
+
 4. Design Rationale
 
 	4.1. Alphanumeric Preservation
