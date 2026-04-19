@@ -108,6 +108,15 @@ Complete specification for formatting inline elements - strong, emphasis, and co
             *bold*and*more*       # Valid - multiple strong elements
         :: lex.core.spec.formatting.edge.adjacent-elements :
 
+    6.2. Directly-Nested Formatting
+
+        Formatting markers can open directly adjacent to another formatting marker,
+        producing nested formatting with no intervening content:
+            _*bold italic*_       # Emphasis wrapping strong
+            *_italic bold_*       # Strong wrapping emphasis
+            _*both*_              # Single nested word
+        :: lex.core.spec.formatting.edge.nested-adjacent :
+
     6.2. Formatting Within Code
 
         Code elements do not process internal formatting:

@@ -29,6 +29,7 @@ Inline Token Grammar for lex
 		Example:
 			*bold text*
 			*bold with _emphasis_ inside*
+			*_bold italic_*              (strong directly wrapping emphasis)
 
 		Properties:
 		- Start token: *
@@ -45,6 +46,7 @@ Inline Token Grammar for lex
 		Example:
 			_italic text_
 			_italic with *bold* inside_
+			_*italic bold*_              (emphasis directly wrapping strong)
 
 		Properties:
 		- Start token: _
@@ -204,11 +206,13 @@ Inline Token Grammar for lex
 		A start marker is valid when:
 		- Previous character is not alphanumeric (or is at start of text)
 		- For non-literal types (strong, emphasis): next character must be alphanumeric
+		  OR another inline start marker (*, _, `, #, [) — this enables directly-nested
+		  formatting such as _*foo*_ and *_foo_*
 		- For literal types (code, math, reference): next character must be non-whitespace
 
 		Invalid starts:
 			word*text*      (previous char is alphanumeric)
-			7 * 8           (next char is space, not alphanumeric)
+			7 * 8           (next char is space, neither alphanumeric nor a marker)
 
 	4.2. End Validation
 

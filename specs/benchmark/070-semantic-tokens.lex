@@ -30,6 +30,8 @@ This document demonstrates all semantic token types emitted by lex-lsp and serve
         - Inline _emphasized text_ renders italic
         - Inline `code spans` may have distinct styling
         - Inline #math expressions# render italic
+        - Nested _*bold italic*_ renders as both
+        - Nested *_italic bold_* works either way
 
         Definition Subject:
             Definition subjects are italic. The content below is normal text.

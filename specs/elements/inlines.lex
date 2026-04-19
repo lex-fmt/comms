@@ -20,9 +20,11 @@ Feature: Inlines
 
 2. Syntax
 
-    And just like markdown, there can't be a space between the token and the text. So the general form is: 
+    And just like markdown, there can't be a space between the token and the text. So the general form is:
 
-		<token><alpha-numeric-string><string></end token>
+		<token>(<alpha-numeric-char>|<nested-inline-start>)<string></end token>
+
+	The first character after the opening token must either be alphanumeric or another inline start marker (which opens a nested inline). This allows directly-adjacent nested formatting such as `_*bold italic*_` or `*_italic bold_*`.
 
 	And they can be nested but not crossed.  The start and end tokens can be different (more on this later)
 
