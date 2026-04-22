@@ -1,5 +1,5 @@
-Preamble references [1] before any table.
-The paragraph's [1] cannot reach the table-local footnote below.
+Preamble references [1] before any table; this ref is unresolved
+because the table's positional list below is table-local.
 
 Scores:
     | Model  | Value [1] |
