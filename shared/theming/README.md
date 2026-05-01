@@ -7,7 +7,9 @@ in; the generator's `--check` mode runs in pre-commit and CI to fail on stale ou
 
 ## Schema
 
-```jsonc
+Pseudo-schema (not literal JSON — annotations describe allowed values):
+
+```text
 {
   "version": 1,
   "intensities": {
@@ -18,9 +20,9 @@ in; the generator's `--check` mode runs in pre-commit and CI to fail on stale ou
   },
   "tokens": {
     "<TokenId>": {
-      "intensity": "<intensity name>",
-      "styles":     ["bold" | "italic" | "underline", ...],   // optional
-      "background": "<background name>"                         // optional
+      "intensity":   <intensity name>,
+      "styles":      [<zero or more of: "bold", "italic", "underline">],   // optional
+      "background":  <background name>                                     // optional
     }
   }
 }
@@ -49,10 +51,21 @@ in; the generator's `--check` mode runs in pre-commit and CI to fail on stale ou
 
 ## Workflow
 
-1. Edit `lex-theme.json`.
-2. In each editor repo: `python3 scripts/gen-theme.py` to regenerate.
-3. Commit both `comms` (via submodule bump) and the regenerated file.
-4. Pre-commit runs `gen-theme.py --check`; CI runs the same.
+There are two contexts for working with this file. Pick the right one:
 
-Do **not** hand-edit generated files. They will be overwritten on the next
-regeneration and the drift will fail CI.
+**Editing the canonical theme** (in this `comms` repo):
+
+1. Edit `lex-theme.json` here.
+2. Commit + push to `comms`. Open a PR if your repo workflow requires one.
+
+**Consuming the canonical theme** (in any editor repo that submodules `comms`):
+
+1. Bump the `comms` submodule pointer to a commit that has the change you want
+   (`git -C comms pull origin main`, then commit the gitlink in the editor repo).
+2. Run `python3 scripts/gen-theme.py` in that editor repo to regenerate.
+3. Commit both the bumped submodule pointer and the regenerated file.
+4. The editor repo's pre-commit hook and CI run `gen-theme.py --check` to
+   guarantee the generated file matches the canonical at that submodule SHA.
+
+Do **not** hand-edit generated files in any editor repo. They will be overwritten
+on the next regeneration and the drift will fail CI.

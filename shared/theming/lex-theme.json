@@ -1,5 +1,5 @@
 {
-  "_comment": "Lex Monochrome theme — canonical data. Edited by humans; consumed by per-editor generators in vscode/, nvim/, lexed/, zed-lex/. Do not hand-edit generated files in those repos. See comms/shared/theming/README.md for the schema.",
+  "_comment": "Lex Monochrome theme — canonical data. Edited by humans; consumed by per-editor generators in vscode/, nvim/, lexed/, zed-lex/. Do not hand-edit generated files in those repos. See README.md (sibling of this file) for the schema.",
   "version": 1,
   "intensities": {
     "normal":   { "light": "#000000", "dark": "#e0e0e0" },
