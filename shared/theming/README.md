@@ -39,7 +39,13 @@ in; the generator's `--check` mode runs in pre-commit and CI to fail on stale ou
   target format (e.g., VSCode `"bold underline"`, Lua `bold = true,
   underline = true`).
 - **Background** references a key in `backgrounds`. Currently only
-  `VerbatimContent` uses one (`code_bg`).
+  `VerbatimContent` uses one (`code_bg`). Editors that cannot apply a
+  background via their syntax-highlighting mechanism silently ignore
+  this hint:
+  - nvim: applied via `bg = ...` on the highlight group.
+  - lexed (Monaco): applied via the rule's `background` field.
+  - vscode: ignored (semantic-token customization has no background).
+  - zed: ignored (syntax override has no background).
 
 ## Workflow
 
