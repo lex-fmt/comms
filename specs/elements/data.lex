@@ -36,7 +36,10 @@ Components
 		specs/v1/elements/label.lex: a letter followed by letters, digits, underscores,
 		dashes, or periods (for namespacing).
 
-		Examples: note, warning, javascript, lex.internal, plugin.myapp.custom
+		Examples: note, warning, javascript, mycompany.internal, plugin.myapp.custom
+
+		(The `lex.*` prefix is reserved for the Lex core; see
+		specs/general.lex §3.1 and specs/elements/lex.include.lex.)
 
 	Parameters (optional):
 		Key-value pairs that provide structured metadata. Parameters follow the syntax

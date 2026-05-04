@@ -35,7 +35,7 @@ Resolution Behaviour
     4. Recursively resolves the loaded file's own includes.
     5. Stamps each loaded node's `Range.origin_path` with the loaded file's path.
     6. Splices the loaded file's body into the parent container at the include's position.
-    7. Discards the included document's title and document-level annotations are converted to non-document forms (DocumentTitle → Paragraph, doc-level annotations → regular annotations) and prepended.
+    7. Converts the included document's title and document-level annotations to non-document forms (DocumentTitle → Paragraph, doc-level annotations → regular annotations) and prepends them to the splice. This matches what a textual paste with indent-shift would parse: an unindented title line becomes a paragraph in the host's context; doc-level annotations become next-sibling-attaching ones.
 
     Standard annotation attachment then runs on the merged tree. The `lex.include` annotation lands on the first spliced sibling per the normal "attach to next sibling" rule.
 
@@ -65,13 +65,14 @@ Errors
     - `DepthExceeded`: the include depth exceeded `[includes].max_depth` (default 8).
     - `RootEscape`: the resolved path is outside the resolution root.
     - `NotFound`: the loader could not find the target file.
+    - `LoaderIo`: the loader propagated a non-`NotFound` I/O error (permission denied, broken symlink, etc.).
     - `ParseFailed`: the loaded file did not parse as Lex.
     - `ContainerPolicy`: the included content is illegal in the host container (see above).
     - `MissingSrc`: the annotation had no `src` parameter.
 
 CLI
 
-    `lexd convert` and `lexd inspect` resolve includes by default. `lexd format` never expands includes — the annotation stays in the formatted output as authored.
+    `lex convert` and `lex inspect` resolve includes by default. `lex format` never expands includes — the annotation stays in the formatted output as authored.
 
     Flags:
 
