@@ -1,6 +1,6 @@
 Proposal: The Includes Feature
 
-    Lex today assumes a one-document, one-file relationship. This proposal introduces a sanctioned mechanism for a document to pull in content from another Lex file and have it merged into its tree at parse-plus-resolution time. The surface is a reserved annotation (`:: lex.include src="..." ::`) whose children are filled in by a post-parse resolution pass. The parser itself stays pure and filesystem-free. The mechanism deliberately starts narrow: relative and root-absolute paths only, no URLs, no absolute filesystem paths, no conditionals, no templating. The goal is a beachhead — a small, canonical core that third-party tooling can build on without fragmenting the ecosystem.
+    Lex today assumes a one-document, one-file relationship. This proposal introduces a sanctioned mechanism for a document to pull in content from another Lex file and have it merged into its tree at parse-plus-resolution time. The surface is a reserved annotation (`:: lex.include src="..." ::`) whose included content is spliced into the parent container at the include site. The parser itself stays pure and filesystem-free. The mechanism deliberately starts narrow: relative and root-absolute paths only, no URLs, no absolute filesystem paths, no conditionals, no templating. The goal is a beachhead — a small, canonical core that third-party tooling can build on without fragmenting the ecosystem.
 
 1. Motivation
 
@@ -38,6 +38,7 @@ Proposal: The Includes Feature
         - Define a security model from day one, before use cases ossify.
         - Stay composable with every other Lex element (sessions, footnotes, references, annotations).
         - Reserve a namespace (`lex.*`) so the core can grow without colliding with third-party extensions.
+        - Match author intuition: an include should behave as if its content had been pasted at the include site, indent-shifted to match.
         - Ship a narrow core. Leave URL fetching, cross-document references, templating, and conditionals out of v1 of the feature, but in a way that does not require breaking changes to add later.
 
 2. Surface Syntax
@@ -48,9 +49,9 @@ Proposal: The Includes Feature
 
             :: lex.include src="chapters/01-introduction.lex" ::
 
-        The annotation may appear anywhere an annotation is legal: at document root, inside a session, inside a definition, or inside another annotation's block content. Its attachment follows standard annotation attachment rules (see `elements/annotation.lex`).
+        The annotation may appear anywhere an annotation is legal: at document root, inside a session, inside a definition, inside a list item, or inside another annotation's block content. Its attachment, post-resolution, follows standard annotation attachment rules (see `elements/annotation.lex`): it attaches to the first node that came from the included file.
 
-        Before resolution, the annotation is a normal `Annotation` node with empty children. After resolution, its children slot contains the content of the included document.
+        Before resolution, the annotation is a normal `Annotation` node. After resolution, the included content occupies the parent container at the annotation's position and the annotation itself is attached to the first spliced node.
 
     2.2 Examples
 
@@ -70,15 +71,19 @@ Proposal: The Includes Feature
 
                 :: lex.include src="appendix/glossary.lex" ::
 
-        With an explicit title override dropped — the included file's own title is not carried over:
+        Including a fragment that has no top-level sessions (e.g. a thread of review annotations):
 
-            :: lex.include src="shared/boilerplate-header.lex" ::
+            1. Introduction
+
+                Some content.
+
+                :: lex.include src="reviews/intro-thread.lex" ::
 
     2.3 Why Annotation, Not Verbatim
 
         Verbatim blocks already accept a `src=` parameter for linking external content, but verbatim's semantic is "content that comes from a file and stays opaque" (images, embedded code shown literally). An include's semantic is the opposite: "replace me with the parsed AST of that file." These are different enough that conflating them hurts both.
 
-        Annotations already have a `children: GeneralContainer` slot. That slot is the natural landing pad for the resolved content. No AST shape change is required — only a resolver.
+        Annotations also already have the right attachment semantics: an annotation describes the thing that immediately follows it. The include annotation describes the included content. After resolution, the standard attachment rule places the annotation on the first node it pulled in, which is exactly the right place for tooling to find it.
 
     2.4 The lex.* Namespace
 
@@ -88,30 +93,30 @@ Proposal: The Includes Feature
 
     3.1 Parser Remains Pure
 
-        The parser does not touch the filesystem. A `lex.include` annotation parses exactly like any other annotation: label, parameters, empty children. This is a hard invariant: it preserves synchronous, local, deterministic parsing, and it keeps the parser usable in WASM, LSP hot paths, and sandboxed environments without I/O permissions.
+        The parser does not touch the filesystem. A `lex.include` annotation parses exactly like any other annotation: label, parameters, no body. This is a hard invariant: it preserves synchronous, local, deterministic parsing, and it keeps the parser usable in WASM, LSP hot paths, and sandboxed environments without I/O permissions.
 
-    3.2 Analysis-Layer Resolution Pass
+    3.2 Core-Layer Resolution Pass
 
-        Resolution lives in the analysis layer (crate: `lex-analysis`). A new module exposes a function roughly shaped as:
+        Resolution lives in `lex-core` (module: `lex_core::includes`). A new function is exposed, roughly shaped as:
 
             resolve_includes(
                 document: Document,
-                root: Path,
-                loader: Loader,
-                config: ResolveConfig,
+                config: &ResolveConfig,
+                loader: &dyn Loader,
             ) -> Result<Document, IncludeError>
         :: signature ::
 
-        The pass walks the tree, finds each `lex.include` annotation, asks the loader to produce the source text, parses it (using the existing parser), recursively resolves its own includes (subject to the depth and cycle limits), strips its title and document-level annotations, and splices its root session's children into the including annotation's children slot.
+        The pass walks the tree, finds each `lex.include` annotation, asks the loader to produce the included file's source text, parses it (using the existing parser), recursively resolves its own includes (subject to the depth and cycle limits), stamps the resulting tree with origin information, validates that its body is legal in the include site's parent container, and splices the body into that container at the include annotation's position.
 
-        Consumers that want the pre-resolution tree (editor tooling displaying the include as a collapsed node, for instance) simply skip the pass.
+        Consumers that want the pre-resolution tree (the formatter, the tree-sitter grammar, editor tooling that displays the include statement as authored) simply skip the pass. `parse_document` is unchanged and resolution is opt-in.
 
     3.3 Injectable Loader
 
-        The loader is an injected callable, not hard-coded to `std::fs`. This lets:
+        The loader is an injected callable, not hard-coded to `std::fs`. lex-core's own code does not reference `std::fs` for include resolution. This lets:
 
         - Tests use in-memory fixtures.
         - WASM builds provide a JS-backed loader.
+        - The LSP wraps an FS loader with file-watch invalidation.
         - Future extensions plug in caching, URL fetching, or virtual filesystems without touching the core.
 
 4. Path Resolution
@@ -132,7 +137,11 @@ Proposal: The Includes Feature
 
     4.3 The Document Root
 
-        Every resolution has exactly one root. It defaults to the directory of the entry-point document (the file passed to `lex format`, `lex-lsp`'s workspace root, etc.). It is overridable via config (`lex.toml`) or CLI flag.
+        Every resolution has exactly one root, discovered in this order:
+
+        1. An explicit override (CLI flag `--includes-root` or `[includes].root` in `lex.toml`).
+        2. The directory of the nearest `lex.toml` walking upward from the entry-point document. This matches the existing clapfig config discovery and gives project-wide includes without per-invocation config.
+        3. The directory of the entry-point document itself, as a fallback when no `lex.toml` is found.
 
         All paths — relative or root-absolute — normalize to a canonical absolute path. That canonical path must live inside the root. Any normalized path that escapes the root is a resolution error, even if the on-disk file exists.
 
@@ -144,44 +153,67 @@ Proposal: The Includes Feature
 
     5.1 Where the Content Lands
 
-        The included document's root session's children are spliced into the `lex.include` annotation's `children` slot. Nothing else in the AST shape changes.
+        The included document's body is spliced into the parent container at the include annotation's position. The annotation does not absorb the included content into its own children slot; the content appears as the annotation's siblings, immediately after it, in the parent container.
 
-        There is no "inject at document root" escape hatch. It would conflict with the attachment rules of annotations and duplicate an already-clean pattern: put the `lex.include` at the top of the including document.
+        Standard annotation attachment then runs as it would for any annotation: the `lex.include` annotation attaches to the first spliced sibling (the first node that came from the included file). After attachment, the include annotation is no longer standalone — it lives in the `annotations` field of the spliced node, exactly as if the author had written the annotation immediately above that content inline.
 
-    5.2 Dropped on Merge
+        This rule is uniform with how every other annotation in lex behaves: an annotation describes the thing it precedes. The thing the include annotation precedes is the included content.
 
-        Two elements of the included document are discarded during the splice:
+        The mental model authors should hold: the include behaves as if the included file's text had been pasted at the include site, indent-shifted to match. The implementation operates on parsed trees rather than raw text, but the resulting tree is the same.
 
-        - The document title. A document has at most one title; the including document's title wins.
-        - Document-level annotations (those attached to `DocumentStart`). They describe the included file as a standalone artifact, not as a fragment. Authors who want them to apply in the merged context put them adjacent to the include site.
+    5.2 Document-Level Metadata of the Included File
 
-        Everything else — sessions, definitions, verbatim blocks, tables, lists, paragraphs, element-level annotations — carries over verbatim.
+        An included file is parsed as a standalone Lex document. Its parsed form may contain a `DocumentTitle` and document-level annotations attached to `DocumentStart`. These elements describe the file as a standalone artifact, not as a fragment in a host document.
 
-    5.3 Origin Tracking
+        On splice, they are converted to their non-document forms and prepended to the body:
 
-        Each spliced node carries its origin file path. This is used by:
+        - The `DocumentTitle`, if present, is converted to a `Paragraph` containing the title text and prepended to the splice list.
+        - Document-level annotations, if present, are converted to regular annotations and prepended.
 
-        - File-reference resolution (so `[./figure.png]` in an included atom resolves relative to the atom, not the merged document).
-        - Diagnostics (so errors point to the authoring file, not the post-merge location).
+        This is exactly what would happen in a textual model that pasted the included source into the host file with indent-shift: an unindented title line would parse as a paragraph in the new context, and document-level annotations would parse as regular annotations attaching to the next sibling.
+
+        The benefit is round-trip predictability: when a chunk of merged content is later extracted into a standalone file, the leading paragraph naturally parses as a doc title and the leading annotations naturally parse as document-level metadata.
+
+    5.3 Container-Policy Validation
+
+        Lex's typed-content system enforces that certain containers do not allow Sessions: `Definition`, `Annotation` body, and `ListItem` (collectively, `GeneralContainer`). When an include site sits inside one of these containers and the included file contains top-level Sessions, the splice would produce an invalid tree.
+
+        The resolver detects this case and produces a precise error pointing at the include site, naming the offending container kind and the included file. The cases are:
+
+        - `lex.include` inside the long-form body of another annotation, where the included file contains Sessions.
+        - `lex.include` inside a definition, where the included file contains Sessions.
+        - `lex.include` inside a list item, where the included file contains Sessions.
+
+        Includes at the document root or inside a Session never violate, because `SessionContainer` accepts every element type. The rule is uniform: an include is legal where its included content is legal.
+
+    5.4 Origin Tracking
+
+        Every node in the merged tree carries an `origin_path: Option<Arc<PathBuf>>` field on its `Range`. Nodes from the entry-point document carry the entry-point path (or `None`, depending on configuration); nodes from an included file carry that file's canonical path.
+
+        This is used by:
+
+        - File-reference resolution (so `[./figure.png]` in an included atom resolves relative to the atom's directory, not the merged document's).
+        - Diagnostics (so errors point to the authoring file and line, not the post-merge location).
         - LSP goto-definition and hover.
+        - "What files compose this document?" queries (walk the tree, collect distinct origin paths).
 
-        Origin tracking is a side-table or per-node field; it does not rewrite any content.
+        Origin information is stamped post-parse on each loaded file's tree, before splicing. The parser is unchanged. Multiple inclusions of the same file produce nodes that share the same origin path; no per-include counter is needed because none of the use cases require distinguishing the copies.
 
 6. References Across the Merge
 
     6.1 Footnotes
 
-        Numbered footnote references (`[1]`, `[2]`, ...) scope to the file they were authored in. Resolution of footnote references to their definitions happens per-file, before merging. After merge, a reference carries a resolved target (or a dangling-reference diagnostic); there is no cross-file number collision to worry about.
+        Numbered footnote references (`[1]`, `[2]`, ...) scope to the file they were authored in. Footnote resolution runs per-file before merging — each reference carries a resolved target (or a dangling-reference diagnostic) by the time the splice happens. After merge, there is no cross-file number collision to worry about, because no inline still carries a bare number waiting to be matched.
 
     6.2 Session References
 
-        Session references like `[#2.1]` are string targets, resolved against the tree the analysis layer sees. After merging, the tree the resolver sees is the merged tree. A reference like `[#2.1]` inside an included atom means "session 2.1 in my current context" — which, after merge, is the merged context.
+        Session references like `[#2.1]` are resolved against the post-merge tree by the existing reference resolver. A reference like `[#2.1]` inside an included atom means "session 2.1 in my current context" — which, after merge, is the merged context.
 
         No path rewriting is performed. If the author's intent was "2.1 within this atom's private namespace," that intent is not expressible in v1. The cross-document reference syntax (section 9.2) will address this in a future version.
 
     6.3 File References
 
-        File references like `[./figure.png]` and `[/shared/logo.svg]` are not touched by the parser. The file-reference resolver uses the origin-file tag (section 5.3) to resolve relative paths against the authoring file, and root-absolute paths against the document root.
+        File references like `[./figure.png]` and `[/shared/logo.svg]` are not touched by the parser. The file-reference resolver consults each reference's enclosing node's `Range.origin_path`: relative paths resolve against the authoring file's directory, root-absolute paths against the document root.
 
     6.4 No Path Rewriting
 
@@ -191,11 +223,11 @@ Proposal: The Includes Feature
 
     7.1 Cycle Detection
 
-        The resolver maintains a set of canonicalized paths currently being resolved. Encountering a path already in the set is a cycle error. Non-negotiable for v1.
+        The resolver maintains a stack of canonicalized paths currently being resolved. Pushing a path that is already on the stack is a cycle error. Two consecutive includes of the same file are not a cycle — each include pushes and pops independently, so a file can be included multiple times in the merged tree.
 
     7.2 Depth Limit
 
-        The maximum include depth is 8. This is enough for any reasonable atomization strategy (aggregator includes per-chapter includes per-section includes) while bounding the resolver's worst-case work. Configurable via `ResolveConfig` for pathological document sets; hitting the limit is an error, not a silent truncation.
+        The maximum include depth is 8 by default. This is enough for any reasonable atomization strategy (aggregator includes per-chapter includes per-section includes) while bounding the resolver's worst-case work. Configurable via `ResolveConfig` for pathological document sets; hitting the limit is an error, not a silent truncation.
 
     7.3 Root Escape
 
@@ -276,11 +308,15 @@ Proposal: The Includes Feature
 
     10.1 No Parser Change Required
 
-        `:: lex.include src="..." ::` already parses today as a normal annotation with parameters. The parser needs no grammar change to support this proposal. The entire feature is a new resolution pass plus a reserved label.
+        `:: lex.include src="..." ::` already parses today as a normal annotation with parameters. The parser needs no grammar change to support this proposal. The entire feature is a new resolution pass, a reserved label, and one new optional field on `Range`.
 
-    10.2 Accessor Convenience
+    10.2 The Range.origin_path Field
 
-        A small convenience accessor on `Annotation`:
+        `Range` gains an optional `origin_path: Option<Arc<PathBuf>>`. Nodes in a non-resolved tree leave this `None`; nodes produced by include resolution carry the canonical path of the file they came from. Existing code that ignores the field continues to work; the field is metadata, not structure.
+
+    10.3 Accessor Convenience
+
+        Small ergonomic accessors on `Annotation`:
 
             impl Annotation {
                 fn is_include(&self) -> bool { ... }
@@ -288,14 +324,14 @@ Proposal: The Includes Feature
             }
         :: signature ::
 
-        Purely ergonomic. The underlying data is already available via the general parameter API.
+        These hide the string-match on the reserved label and serve as the migration boundary if a future version chooses to model includes as a distinct AST node type.
 
-    10.3 Resolution Module Shape
+    10.4 Resolver Module Shape
 
-        A new module `lex_analysis::includer` exposes:
+        A new module `lex_core::includes` exposes:
 
             pub struct ResolveConfig {
-                pub max_depth: usize,   // default 8
+                pub max_depth: usize,
                 pub root: PathBuf,
             }
 
@@ -309,6 +345,11 @@ Proposal: The Includes Feature
                 RootEscape { path: PathBuf, root: PathBuf },
                 NotFound { path: PathBuf },
                 ParseFailed { path: PathBuf, source: ParseError },
+                ContainerPolicy {
+                    include_site: Range,
+                    container: &'static str,
+                    file: PathBuf,
+                },
             }
 
             pub fn resolve_includes(
@@ -328,11 +369,13 @@ Proposal: The Includes Feature
 
     11.2 LSP
 
-        The LSP runs the resolution pass on document open and on included-file change (via file watch). Diagnostics are surfaced at the `lex.include` annotation's range when resolution fails. Goto-definition on the include jumps to the target file. Hover on the include can show a preview of the included content.
+        The LSP runs the resolution pass on document open and on file watch events for included files. Resolution does not run on every keystroke: edits to the current file do not change include resolution, and edits to included files come through file watches.
+
+        Diagnostics are surfaced at the `lex.include` annotation's range when resolution fails. Goto-definition on the include jumps to the target file. Hover on the include can show a preview of the included content.
 
     11.3 CLI
 
-        `lex format` and related commands resolve includes by default. A `--no-includes` flag produces the pre-resolution tree, useful for inspecting a document atom in isolation.
+        `lex format` does not expand includes (per §11.4). `lex convert` and `lex inspect` resolve by default. A `--no-includes` flag bypasses resolution and produces the pre-resolution tree, useful for inspecting a document atom in isolation.
 
     11.4 Formatter
 
@@ -340,30 +383,27 @@ Proposal: The Includes Feature
 
 12. Open Questions
 
-    12.1 Entry-Point Root vs. Nearest-Config Root
-
-        Default root is the entry-point document's directory. Should `lex.toml` discovery (walking upward from the entry point) override that? Leaning yes: matches the existing clapfig config discovery, gives project-wide includes without per-invocation config.
-
-    12.2 Title-Only Included Files
-
-        A file with only a title and no body is a legal Lex document. What does including it do? Current answer: the title is dropped, the body is empty, the include resolves to nothing. This is consistent but surprising. A diagnostic ("included file has no body") may help.
-
-    12.3 Annotation-Level Parameter Passing
+    12.1 Annotation-Level Parameter Passing
 
         The spec above treats `src` as the only parameter with semantic meaning. Should future-proofing allow additional user parameters to flow through as metadata on the resolved content? Leaning no: simpler to wait until a concrete use case forces the design.
 
-    12.4 Formatter Behavior for Long src Values
+    12.2 Formatter Behavior for Long src Values
 
         Very long paths in a `src=` parameter are ugly. The existing annotation parameter formatter rules apply. Likely no special-casing needed; flagged here for validation during implementation.
 
 13. Summary
 
-    The proposal adds no grammar, no new element, and no parser change. It adds:
+    The proposal adds no grammar, no new AST node type, and no parser change. It adds:
 
     - A reserved annotation label (`lex.include`).
     - A reserved namespace (`lex.*`).
-    - An analysis-layer resolution pass with cycle detection, depth limiting, and root-escape enforcement.
+    - A new optional field on `Range` (`origin_path`) for source attribution.
+    - A core-layer resolution pass with cycle detection, depth limiting, root-escape enforcement, and container-policy validation.
     - A documented security model (relative and root-absolute paths only).
     - An explicit list of things that are out of scope — forever (shell, absolute FS paths, templating, conditionals) or for now (URLs, partial includes, cross-document references).
 
     The goal is to give the ecosystem a sanctioned beachhead: a small, canonical core that tooling can build on without each implementer reinventing it, and without locking out the more ambitious features that may arrive later.
+
+14. Note on Revision
+
+    This proposal supersedes an earlier draft that placed resolved content into the include annotation's `children` slot and located the resolver in `lex-analysis`. That draft conflicted with the typed-content system: an included file containing Sessions could not legally inhabit the `GeneralContainer` of an annotation. The current "splice into parent, attach via standard rules" model resolves the conflict, mirrors the textual paste mental model that authors form intuitively, and unifies include-site behavior with how annotations already work everywhere else in lex. The resolver moved to `lex-core` because the splice operation is part of producing a well-formed Lex document, not an optional analysis utility. The earlier draft is in source control history.
