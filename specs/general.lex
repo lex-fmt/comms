@@ -40,6 +40,8 @@ The lex language
 
         Annotation content can include paragraphs, lists, definitions, verbatim blocks, tables, and nested annotations, but cannot contain sessions.
 
+        The `lex.*` annotation label prefix is reserved for core-defined semantics (e.g. `lex.include`, see specs/elements/lex.include.lex). Third-party tooling must not author labels in this namespace; the core may add new `lex.*` labels without coordinating with downstream. Non-reserved labels remain freely available for extensions (`mycompany.review`, `docs.embed`, etc.).
+
     2. Lists
 
         Lists are collections of at least two list items.

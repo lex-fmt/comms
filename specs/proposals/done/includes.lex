@@ -1,3 +1,5 @@
+:: status :: This proposal was implemented in lex-fmt/lex PRs #486–#495. It is frozen — for current behaviour of the feature, see specs/elements/lex.include.lex. Kept here to preserve design rationale; small deviations between the proposal's original wording and the shipped behaviour are noted in the relevant section's revision history (see lex-fmt/comms#25).
+
 Proposal: The Includes Feature
 
     Lex today assumes a one-document, one-file relationship. This proposal introduces a sanctioned mechanism for a document to pull in content from another Lex file and have it merged into its tree at parse-plus-resolution time. The surface is a reserved annotation (`:: lex.include src="..." ::`) whose included content is spliced into the parent container at the include site. The parser itself stays pure and filesystem-free. The mechanism deliberately starts narrow: relative and root-absolute paths only, no URLs, no absolute filesystem paths, no conditionals, no templating. The goal is a beachhead — a small, canonical core that third-party tooling can build on without fragmenting the ecosystem.

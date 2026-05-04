@@ -13,28 +13,35 @@ Syntax
 		warning
 		code-example
 		api_endpoint
-		lex.internal
+		mycompany.internal
 		plugin.myapp.custom
 
 	Invalid examples:
-		2note           (cannot start with digit)
-		note:warning    (colon not allowed)
-		note/type       (slash not allowed)
+		2note            (cannot start with digit)
+		note:warning     (colon not allowed)
+		note/type        (slash not allowed)
+		lex.foo          (the lex.* prefix is reserved for core-defined
+		                 semantics — see specs/general.lex §3.1 and
+		                 specs/elements/lex.include.lex)
 
 Namespacing
 
 	Labels support dot notation for namespaces:
 		Standard: note, warning, example
-		Namespaced: lex.internal, plugin.myapp.custom
+		Namespaced: mycompany.internal, plugin.myapp.custom
 
 	Namespacing allows:
 		- Tool-specific annotations (build.debug, lint.ignore)
 		- Plugin extensions (myplugin.custom)
 		- Avoiding conflicts between tools
 
+	The `lex.*` namespace is reserved for the Lex core. Authors and
+	third-party tooling must not use it; the core may add new `lex.*`
+	labels (such as `lex.include`) without coordinating with downstream.
+
 Examples
 
 	:: note :: Simple annotation with label only
 	:: warning severity=high :: Label with parameters
-	:: lex.internal :: Namespaced label
+	:: mycompany.review :: Namespaced label
 	:: build.output format=html :: Tool-specific namespaced label
