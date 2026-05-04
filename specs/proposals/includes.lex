@@ -137,7 +137,11 @@ Proposal: The Includes Feature
 
     4.3 The Document Root
 
-        Every resolution has exactly one root. It defaults to the directory of the entry-point document (the file passed to `lex format`, `lex-lsp`'s workspace root, etc.). It is overridable via config (`lex.toml`) or CLI flag.
+        Every resolution has exactly one root, discovered in this order:
+
+        1. An explicit override (CLI flag `--includes-root` or `[includes].root` in `lex.toml`).
+        2. The directory of the nearest `lex.toml` walking upward from the entry-point document. This matches the existing clapfig config discovery and gives project-wide includes without per-invocation config.
+        3. The directory of the entry-point document itself, as a fallback when no `lex.toml` is found.
 
         All paths — relative or root-absolute — normalize to a canonical absolute path. That canonical path must live inside the root. Any normalized path that escapes the root is a resolution error, even if the on-disk file exists.
 
@@ -379,15 +383,11 @@ Proposal: The Includes Feature
 
 12. Open Questions
 
-    12.1 Entry-Point Root vs. Nearest-Config Root
-
-        Default root is the entry-point document's directory. Should `lex.toml` discovery (walking upward from the entry point) override that? Leaning yes: matches the existing clapfig config discovery, gives project-wide includes without per-invocation config.
-
-    12.2 Annotation-Level Parameter Passing
+    12.1 Annotation-Level Parameter Passing
 
         The spec above treats `src` as the only parameter with semantic meaning. Should future-proofing allow additional user parameters to flow through as metadata on the resolved content? Leaning no: simpler to wait until a concrete use case forces the design.
 
-    12.3 Formatter Behavior for Long src Values
+    12.2 Formatter Behavior for Long src Values
 
         Very long paths in a `src=` parameter are ugly. The existing annotation parameter formatter rules apply. Likely no special-casing needed; flagged here for validation during implementation.
 
