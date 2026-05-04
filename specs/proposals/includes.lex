@@ -97,7 +97,7 @@ Proposal: The Includes Feature
 
     3.2 Core-Layer Resolution Pass
 
-        Resolution lives in `lex-core` (module: `lex_core::includes`). A new function exposed roughly as:
+        Resolution lives in `lex-core` (module: `lex_core::includes`). A new function is exposed, roughly shaped as:
 
             resolve_includes(
                 document: Document,
@@ -116,7 +116,7 @@ Proposal: The Includes Feature
 
         - Tests use in-memory fixtures.
         - WASM builds provide a JS-backed loader.
-        - The LSP wrap an FS loader with file-watch invalidation.
+        - The LSP wraps an FS loader with file-watch invalidation.
         - Future extensions plug in caching, URL fetching, or virtual filesystems without touching the core.
 
 4. Path Resolution
