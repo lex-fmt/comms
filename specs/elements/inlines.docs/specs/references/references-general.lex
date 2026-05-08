@@ -26,12 +26,12 @@ Complete specification for the general reference system - the foundation for lin
         - References are resolved based on content pattern
 
         Examples of the general form:
-            [section title]
-            [http://example.com]
-            [file.txt]
-            [@citation-key]
-            [::annotation-id]
-        :: reference-pattern
+            
+        - [section title]
+        - [http://example.com]
+        - [file.txt]
+        - [@citation-key]
+         - [::annotation-id]
 
     2.2. Content-Based Type Resolution
 
@@ -117,8 +117,6 @@ Complete specification for the general reference system - the foundation for lin
 
         Purpose: Precise pointers to individual `:: label ::` annotations.
         The `::` prefix mirrors the annotation marker syntax, distinguishing annotation references from other reference types. Resolution is by label matching, case-insensitive.
-
-    3.7. TK (To Come) References
 
         Placeholder references for future content:
             [TK]                    # Naked TK reference
