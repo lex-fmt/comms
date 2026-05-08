@@ -1,37 +1,73 @@
 Proposal: Extending Lex via Label Namespaces
 
-    Labels — the identifiers that appear in annotations (`:: foo ::`) and verbatim closings (`:: rust ::`) — are Lex's natural extension points. They sit on metadata and on non-Lex content, and they already organise themselves into namespaces by convention (`lex.include`, `acme.foo`). Today only `lex.*` has declared semantics; everything else is free-form. An editor that wants to do something useful with `acme.foo` has to invent its own discovery, schema, and validation, and any two tools that try will diverge.
+    A modern, open data format that wants wide adoption across specialised contexts has to be a platform, not a parser. Authoring, presenting, publishing, processing, transforming — every stage of a document's life accumulates tooling, and a format that doesn't make room for that tooling forces every consumer to reinvent it. Lex's parser, formatter, and linter are the floor. This proposal sets the next floor up: an extension system that turns Lex's existing label surface into a platform third parties can build on with minimal ceremony and without forking the language.
 
-    This proposal extends label-as-namespace into a complete extension system: namespaces that guard schemas, ownership grounded in a decentralised convention rather than a registry, and tooling integration via a small handler protocol. The parser does not change. The `lex.*` namespace stays special only in being hard-coded; every other code path treats it identically to a third-party namespace.
+    The extensibility on offer is deliberately bounded. Lex does not let you invent new syntax — no new list markers, no new heading style, no new way to delimit a session. The only extension points are the two places where Lex already accepts arbitrary identifiers: annotations (`:: label params ::`) and verbatim block closings (`:: label ::`). Everything in this proposal hangs off those two surfaces. We believe this is the right balance between two failure modes — locked-down formats with no extension story, where every serious adoption needs a fork, and wide-open macro systems, where no two documents agree on what they mean. Bounded extensibility keeps a vanilla Lex parser able to read any document, while letting third parties attach typed semantics on top.
 
-    The intent is to give third parties — orgs, editors, build pipelines — a sanctioned way to attach typed data to Lex AST nodes, with editor support for free, without each implementer reinventing the surface.
+    Concretely, this proposal extends label-as-namespace into a complete extension system: namespaces that guard schemas, ownership grounded in a decentralised convention rather than a registry, hook integration points that name where in the pipeline extension code participates, and a single handler protocol delivered over three transports — native Rust traits, JSON-RPC subprocesses, and (deferred) WASM components. The parser does not change. The `lex.*` namespace stays special only in being hard-coded; every other code path treats it identically to a third-party namespace.
 
-1. Motivation
+    Wire-level details — JSON-RPC method catalogue, payload schemas, AST node shapes, versioning rules — live in the companion document, *Specification: Lex Extension Wire Format* ([./lex-extension-wire.lex]).
 
-    1.1 Labels Are Already the Extension Point
+1. Why a Platform, not a Parser
 
-        Lex's annotation surface (`:: label params ::`) and verbatim closings (`:: label ::`) are the only places where arbitrary identifiers attach to AST nodes. They cover the two interesting attachment points: structural metadata, and non-Lex content (code, data, embedded fragments). Any extension worth designing routes through one of these.
+    1.1 The Use Case
 
-        Namespaces fall out of dotted identifiers naturally. `lex.include` is the include feature; `acme.foo` is whatever Acme decides. The dot is purely conventional — there is no parser-level namespace concept — and that is exactly right: the parser stays general, the meaning lives in tooling.
+        Lex aims to be useful across many specialised contexts: technical documentation, scientific publishing, legal drafting, internal corporate communication, narrative writing. Each context arrives with its own tooling appetite — issue-tracker links, citation managers, plasma-spec validators, regulatory annotations, screenplay format converters, brand-style enforcers. None of these belong in the core. All of them need to attach typed information to documents and get tooling support across the ecosystem.
 
-    1.2 What Is Missing
+        Consider an editorial commenting workflow:
 
-        The free-form status quo lacks three things:
+            :: acme.commenting role="editor" ::
+                John, I see the relevance for this inclusion, but I question its position. Considering:
 
-        - *Ownership.* Anyone can write `acme.foo` in a document. Nothing prevents two different organisations from defining incompatible `acme.foo` semantics. Without a resolution mechanism, authors have no way to assert "I mean Acme Corp's `foo`."
-        - *Schema.* Tooling has no machine-readable description of what parameters a label takes, what types they have, or what AST nodes it may attach to. Each editor invents its own autocomplete table and falls behind reality.
-        - *Hooks.* A namespace owner has no way to react to invocations of their labels — to validate, to transform, to sync with an external system — without rebuilding the discovery and dispatch machinery from scratch.
+                - The legal status is a core motivator for readers
+                - Most people skim the later sections
 
-    1.3 Design Goals
+                I'd argue for keeping it in the introduction.
 
-        - Document surface stays terse. Authors write `:: acme.foo … ::`, not URIs.
-        - Ownership is decentralised. No central registry to run, no account system, no naming arbitration.
-        - Schemas alone unlock the 80% case (autocomplete, validation, hover) — no code execution required.
-        - Active hooks are universal-language and trust-gated.
-        - One code path. `lex.*` and third-party namespaces flow through identical resolution, validation, and dispatch; the only difference is where `lex.*` schemas come from.
-        - The parser is untouched. The entire feature is config + resolver + handler protocol.
+                Screenshot:
 
-2. Prior Art
+                    This is how others are tackling it:
+                :: image src="comparison.png" ::
+
+        The annotation carries structured params (`role="editor"`), a parsed Lex body (paragraph, list, definition with a nested verbatim), and identity that downstream tools can thread replies off. None of that requires new syntax — annotations and verbatim blocks already exist — but realising it requires a contract between the annotation surface and the tools that consume it.
+
+        Consider a publishing pipeline:
+
+            :: mit.plasma-specs version=4 ::
+                ... domain-specific content ...
+
+        For this to be useful end-to-end, MIT's plasma-spec extension has to plug into converters (LaTeX out, HTML out), validators (does the version-4 spec hold?), editors (autocomplete the `version` parameter, hover its description), and importers (read from XMP, output to Lex). Without an extension story, every consumer reinvents discovery, validation, and dispatch. Two editors that both want to recognise `acme.task` end up with diverging autocomplete tables, diverging diagnostics, and incompatible code actions. Pipeline tools face the same problem at a different layer: each one hard-codes the namespaces it knows about or invents its own plugin protocol.
+
+        The right level for the answer is the format itself. Define a single extension contract, and every consumer that honours it gets every namespace for free. Authors get terse syntax in their documents; namespace owners get one place to ship schemas and code; editors and pipelines get a uniform integration point. That is the shift from parser to platform.
+
+    1.2 Bounded Extensibility
+
+        The extension surface is narrow on purpose. A label can:
+
+        - attach typed parameters and a body to an AST node (annotations)
+        - own the contents of a verbatim block (verbatim closings)
+
+        A label cannot:
+
+        - introduce new structural syntax (no custom list markers, no new session styles, no alternative table delimiters)
+        - alter the parsing of unlabelled content
+        - require a Lex parser to know the label's schema in order to produce a parse tree
+
+        The boundary matters because it preserves portability. A document using `mit.plasma-specs` and `acme.task` is still a valid Lex document under any conforming parser. The parser produces a tree with annotation and verbatim nodes carrying their labels and parameters; an extension-aware consumer adds semantics on top. A consumer that does not know the namespace renders the annotation as an annotation and the verbatim block as a code block — degraded, not broken.
+
+        This rules out a class of extensions deliberately: anything that wants to invent new top-level syntax has to either ship its content inside a verbatim block (where the body is opaque to the parser) or reuse the existing structural elements. We consider this the right trade. The two failure modes — formats so locked down that adoption requires a fork, and formats so open that no two implementations agree on anything — are both worse than a small, principled extension surface.
+
+2. What's Missing from the Status Quo
+
+    Today, labels parse but mean nothing outside `lex.*`. Three concrete gaps:
+
+    - *Ownership.* Anyone can write `acme.foo` in a document. Nothing prevents two different organisations from defining incompatible `acme.foo` semantics. Authors have no way to assert "I mean Acme Corp's `foo`."
+    - *Schema.* Tooling has no machine-readable description of what parameters a label takes, what types they have, what AST nodes it may attach to, or what its body looks like. Each editor invents its own autocomplete table and falls behind reality.
+    - *Hooks.* A namespace owner has no way to react to invocations of their labels — to validate, to transform, to render to another format, to sync with an external system — without rebuilding the discovery and dispatch machinery from scratch.
+
+    All three are addressable without changing the parser, by giving labels a configuration story (ownership), a description format (schema), and a host that dispatches to namespace-owned code (hooks).
+
+3. Prior Art
 
     Several patterns informed the design:
 
@@ -40,31 +76,29 @@ Proposal: Extending Lex via Label Namespaces
     - *Kubernetes CRDs.* Reverse-DNS group names tie ownership to domain ownership. Considered for the namespace surface; rejected as too verbose for the document syntax.
     - *Block Protocol.* Schema-described portable blocks with optional active handlers. Closest spirit-match for the schema tier.
     - *MyST roles and directives.* Declared signatures unlock editor UX without forcing code. Validated the schema-only-as-default approach.
-    - *LSP / DAP / BSP.* JSON-RPC over stdio is the universal-language sweet spot for per-document interaction. Adopted as the handler protocol.
+    - *LSP / DAP / BSP.* JSON-RPC over stdio is the universal-language sweet spot for per-document interaction. Adopted as one of three transports.
 
-    The full survey lives in design notes; this section names only the patterns that survived into the design.
+4. Namespace Ownership
 
-3. Namespace Ownership
+    4.1 The Tap Convention
 
-    3.1 The Tap Convention
-
-        Authors declare the namespaces a document uses in `lex.toml`. The simplest form is a *tap*, modelled on Homebrew: a single key like `acme = { tap = "acme" }` in `[labels]` expands to `github:acme/lex-labels` — schemas live at `github.com/acme/lex-labels`. Documents that use the namespace write the short form throughout: `:: acme.foo … ::`. The verbosity lives in config; the document syntax stays terse. The full block format is in *Example A* ([#11.1]).
+        Authors declare the namespaces a document uses in `lex.toml`. The simplest form is a *tap*, modelled on Homebrew: a single key like `acme = { tap = "acme" }` in `[labels]` expands to `github:acme/lex-labels` — schemas live at `github.com/acme/lex-labels`. Documents that use the namespace write the short form throughout: `:: acme.foo … ::`. The verbosity lives in config; the document syntax stays terse. The full block format is in *Example A* ([#13.1]).
 
         Ownership is grounded in GitHub's existing account system. There is no central Lex registry. Two organisations cannot both own `acme` for the same reason they cannot both own `github.com/acme`.
 
-    3.2 URI Forms
+    4.2 URI Forms
 
-        Tap shorthand is sugar over a URI scheme. Any of the URI forms shown in *Example A* ([#11.1]) is legal as the value of a `[labels]` entry: `github:`, `gitlab:`, `https:`, `path:`, `git+ssh:`. Resolvers are pluggable, so additional schemes can be added without touching the document surface.
+        Tap shorthand is sugar over a URI scheme. Any of the URI forms shown in *Example A* ([#13.1]) is legal as the value of a `[labels]` entry: `github:`, `gitlab:`, `https:`, `path:`, `git+ssh:`. Resolvers are pluggable, so additional schemes can be added without touching the document surface.
 
         This decoupling means GitHub is the default but never privileged. Internal corporate setups, self-hosted Git, or local development directories all work.
 
-    3.3 The lex.* Namespace
+    4.3 The lex.* Namespace
 
-        `lex` is registered at startup from a compiled-in schema bundle. The compiled-in registration is the *only* difference between `lex` and a third-party namespace: schema lookup, validation, attachment policy, and handler dispatch all flow through the same code path. The `lex.toml` parser denies `lex = …` as a key — that single line of validation is the entirety of the reservation. One code path, one denied key, no fork.
+        `lex` is registered at startup from a compiled-in schema bundle. The compiled-in registration is the *only* difference between `lex` and a third-party namespace: schema lookup, validation, attachment policy, hook dispatch, and transport selection all flow through the same code path. The `lex.toml` parser denies `lex = …` as a key — that single line of validation is the entirety of the reservation.
 
-        Concretely, the `lex.*` schemas (`lex.include`, `lex.toc`, future additions) are written in the same YAML format third parties ship. They are compiled into the binary at build time but validated through the same resolver. Dogfooding the same schema infrastructure catches schema-format regressions for free and prevents the core's needs from drifting away from what extensions can express.
+        Concretely, the `lex.*` schemas (`lex.include`, `lex.toc`, future additions) are written in the same YAML format third parties ship and back onto native-trait handlers in the same registry the third-party transports feed into. Dogfooding the same infrastructure catches schema-format regressions for free and prevents the core's needs from drifting away from what extensions can express.
 
-    3.4 Caching and Reproducibility
+    4.4 Caching and Reproducibility
 
         Resolved schemas are content-hashed and cached at `~/.cache/lex/labels/<hash>/`. Two clients with the same `lex.toml` resolve to the same schema as long as upstream has not moved a tag.
 
@@ -72,103 +106,214 @@ Proposal: Extending Lex via Label Namespaces
 
         A lockfile is *not* part of v1. Caching alone gives reproducibility in the absence of upstream tampering, and lockfile machinery is friction in source trees full of one-off documents. If real-world reproducibility complaints arrive, a `lex.lock` file is additive — the URI scheme is already content-addressable.
 
-4. Schemas
+5. Schemas
 
-    A namespace ships a directory of YAML files, one per label. Each file declares the label, its parameters (with types, defaults, and required-ness), its attachment rules (which Lex containers it may attach to, whether text content is allowed), the labels of any verbatim variants it owns, and optional handler metadata. The full schema format is given in *Example B* ([#11.2]).
+    A namespace ships a directory of YAML files, one per label. Each file declares the label, its parameters (with types, defaults, and required-ness), its attachment rules (which Lex containers it may attach to), the *body shape* (none, raw text, or parsed Lex subtree), whether the label is also legal as a verbatim block closing, the *hooks* it implements, declared *capabilities* (file-system, network), and optional handler metadata. The full schema format is given in *Example B* ([#13.2]).
 
-    Editor tooling consumes the schema directly: autocomplete fills in parameter names and types, hover shows descriptions, diagnostics flag missing or wrong-typed parameters, code actions offer fix-its for misspelled names. None of this requires code execution. A schema is a static YAML file; a label's "behaviour" in editors emerges entirely from the schema unless the schema declares otherwise.
+    5.1 Body Shape
 
-    Schema discovery is uniform across namespaces. `lex.toml` names the namespace's source URI; the resolver fetches and caches the directory; each `*.yaml` inside contributes one label. Adding a label to a namespace is a single-file commit upstream and a single cache-bust downstream.
+        An annotation's body — the content between the opening `:: label … ::` and its dedent — is a real Lex subtree, not a free-form string. The schema declares which body shape a label expects:
 
-5. Tooling Hooks
+        - `body.kind: none` — the label is a marker only (e.g., `lex.toc`).
+        - `body.kind: text` — the body is opaque text. The parser does not descend into it.
+        - `body.kind: lex` — the body is parsed Lex, and the handler receives the full AST subtree (paragraphs, lists, definitions, nested annotations, even nested verbatim blocks).
 
-    The hook surface is layered. Each tier is strictly opt-in; most labels live happily at the lowest tier.
+        The `lex` body shape is what makes commenting threads, structured discussion, and rich annotations feasible. A `acme.commenting` annotation can carry a body that itself contains lists, definitions, and embedded images, and the handler receives that body as a parsed tree — not as a string to re-parse.
 
-    5.1 Schema-Only Use (the Default)
+        Verbatim usage is orthogonal: a label declared with `verbatim_label: true` is additionally legal as a verbatim block closing, where the body is always opaque text by definition of the construct. A single label may be usable both as an annotation (with its declared `body.kind`) and as a verbatim closing (with text body).
 
-        Most labels never need code. The schema alone unlocks autocomplete, validation, hover, and search. `lexd labels emit doc.lex --label acme.foo` produces a JSON stream of label invocations together with their attached AST nodes — pull-based integration with anything that consumes JSON. The 80% case requires no handler, no trust prompt, and no process spawning.
+    5.2 Schema Discovery
 
-    5.2 Subprocess Handlers
+        Editor tooling consumes the schema directly: autocomplete fills in parameter names and types, hover shows descriptions, diagnostics flag missing or wrong-typed parameters, code actions offer fix-its for misspelled names. None of this requires code execution.
 
-        Labels that need to do active work — sync with an issue tracker, fetch live data, transform output, expose richer code actions — declare a handler in their schema YAML. `lex-lsp` spawns the handler once per session and talks JSON-RPC over stdio, modelled on LSP itself. Events deliver validated parameters and node context; responses can return diagnostics, code actions, hover content, or transformation patches. The protocol shape is given in *Example C* ([#11.3]).
+        Schema discovery is uniform across namespaces. `lex.toml` names the namespace's source URI; the resolver fetches and caches the directory; each `*.yaml` inside contributes one label. Adding a label to a namespace is a single-file commit upstream and a single cache-bust downstream.
 
-        Handlers are universal-language: anything that can talk JSON-RPC over stdio works. They are persistent processes, so startup cost amortises across the session. They are also unsandboxed, which leads directly into the trust model in §6.
+6. Hook Integration Points
 
-    5.3 WASM Handlers (Deferred)
+    Hooks declare *when in the document's lifecycle* an extension's code participates. A label's schema names which hooks it implements; the host calls only those, at the right pipeline stage. There are five integration points, each tied to a distinct phase of processing.
 
-        A future variant carries the same wire shape but loads handlers as WASM components in-process for sandboxed, low-latency operation. Deferred until a real use case forces it — the WASM component-model toolchain is still maturing in 2026, and the subprocess tier covers everything we know we need today. The handler-author surface is designed so that adding WASM later does not change it.
+    6.1 Parse
 
-6. Trust Model
+        Pure. No hooks fire. Output is the raw AST with label invocations as opaque labelled nodes carrying their parameters and (for `body.kind: lex` labels) parsed body subtrees. A document parses identically with or without any extensions installed.
 
-    Handlers are unsandboxed code. They run with the same privileges as the host process. Default policy is asymmetric:
+    6.2 Resolve
 
-    - In *non-interactive contexts* — `lexd format`, `lexd convert`, `lexd inspect`, CI runs, pre-commit hooks — handlers are off. `--enable-handlers` opts in. A label that triggers code execution from a freshly-cloned repository is a supply-chain attack; the default closes that vector.
-    - In *LSP-attached editor sessions*, the first invocation of a handler prompts for trust. Crucially, trust is pinned not just to the namespace, but to the specific `command` string specified in the schema. The prompt is: "Trust `acme/lex-labels` to execute `acme-lex-handler`?" If the upstream schema changes the command between cache invalidations, the user is re-prompted. The decision is persisted per workspace, modelled on VS Code's workspace trust.
+        Hooks with `resolve` may return AST replacement subtrees, which the host splices into the parent tree before analysis or rendering. This is `lex.include`'s phase, generalised: any namespace can implement label-driven content splicing under the same protocol.
 
-    Schemas (the schema-only tier of §5.1) are not gated by trust. They cannot execute code, they cannot read or write files, and the validation they drive is local to the document. Fetching the schema is the same operation as fetching any other versioned text from a Git host.
+        The resolve phase has cycle detection and depth limits, mirroring `lex.include`'s safeguards. A hook returning a subtree containing further resolve-eligible labels has those resolved transitively.
 
-7. lex-lsp Is the Host
+    6.3 Analyze
 
-    Editor extensions do not talk to handlers directly. `lex-lsp` is the single host: it resolves namespaces, loads schemas, spawns handlers, dispatches events, and surfaces results through standard LSP messages — diagnostics, code actions, completion items, hover, document symbols.
+        Hooks with `validate` return diagnostics for the hosting document. Hooks with `label` are notified informationally with no response expected — useful for handlers that maintain external state (caches, indices). Both fire after resolve, on the spliced tree.
 
-    This matches the established design rule that editor logic belongs in the LSP. Editor extensions stay UI shells. Any editor with LSP support — VS Code, Neovim, Zed, Helix, lexed — gets label-driven features for free, without per-editor extension code. A new editor entering the ecosystem starts fully featured.
+    6.4 Render
 
-    The same rule applies to the CLI. `lexd` and `lex-lsp` share a single resolver crate; CLI subcommands like `lexd labels emit` and `lexd labels validate` use the same code paths the LSP uses, so behaviour cannot diverge between editor sessions and command-line tooling.
+        Hooks with `render` are called by `lexd convert` and downstream pipeline tools. The hook receives the label's params and body subtree plus a target format identifier (`html`, `latex`, `markdown`, `pdf`, or any namespace-defined format), and returns either a target-format string snippet or, for tree-shaped target formats, a wire AST in the target's vocabulary.
 
-8. Explicitly Out of Scope
+        This is the integration point that turns Lex into a publishing platform. A `mit.plasma-specs` namespace can declare `render: [latex, html]` and have its content participate in any conversion pipeline that calls `lexd convert`. An importer can ship as a separate tool that produces `mit.plasma-specs` annotations from XMP or LaTeX input; the export side and the editor side need no awareness of where the annotation came from.
 
-    8.1 Community Registry
+    6.5 Interact
 
-        Some package ecosystems run a single canonical registry mapping short names to URIs (Cargo's crates.io, npm). Lex labels v1 has none. Aliases live in each project's `lex.toml`. This avoids running infrastructure, avoids the alias-collision arbitration problem entirely, and keeps the design honest about its decentralisation. If real-world usage justifies a registry later, it is purely additive.
+        LSP-only hooks: `hover`, `completion`, `code_action`. Fire in response to corresponding LSP requests, on labelled nodes. Surface as standard LSP responses to the editor.
 
-    8.2 Lockfile
+    Each label's schema names which integration points it participates in. A label that only contributes diagnostics declares `hooks: { validate: true }`. A label that drives output declares `hooks: { render: [html, latex] }`. A label that does both declares both. The host pre-computes which phases need to call into which namespaces and skips namespaces whose hooks are not relevant to the operation in flight.
 
-        See §3.4. Caching is content-hashed; a `lex.lock` file can be added later without breaking changes.
+7. Transport Tiers
 
-    8.3 WASM Handlers
+    Hooks are a contract, not a delivery mechanism. The same hook events flow over three transports; a namespace declares which transport delivers its handler.
 
-        See §5.3.
+    7.1 Native Rust Trait
 
-    8.4 Schema Inheritance and Composition
+        The protocol's source-of-truth: a `LexHandler` trait in the public `lex-extension` crate, with one method per hook event (`on_validate`, `on_render`, `on_resolve`, etc.). Built-in `lex.*` handlers are native impls compiled into the host. Library consumers embedding Lex in their own Rust applications (a docs pipeline, a publishing server, a custom CLI) register native handlers directly with the engine — zero IPC, type-safe payloads, no subprocess to spawn. The trait sketch is in *Example C* ([#13.3]).
+
+        Wire AST types used by the trait are stable across lex-core versions (the trait imports them from `lex-extension`, not from lex-core internals). Internal AST changes do not break native handlers.
+
+    7.2 Subprocess + JSON-RPC
+
+        The default transport for third-party shipping. A handler binary is spawned by the host with stdin/stdout pipes, and messages are LSP-framed JSON-RPC. The wire format and method catalogue are specified in the companion document, *Specification: Lex Extension Wire Format* ([./lex-extension-wire.lex]).
+
+        Subprocess handlers are universal-language: anything that can talk JSON-RPC over stdio works. They are persistent processes, so startup cost amortises across the session.
+
+    7.3 WASM Components (deferred)
+
+        The same hook events delivered as imports/exports of a WASM component running in-process. Sandboxed by default, low-latency, polyglot at the source-language level. Deferred until the component-model toolchain is consistently usable across the languages namespace authors care about. The handler-author surface (the trait shape, the event payloads) is designed so that adding a WASM transport later does not change it.
+
+    7.4 Choosing a Transport
+
+        A namespace ships exactly one transport for v1. Pick by these axes:
+
+        - *Native trait.* Built-ins, in-process Rust embedders, performance-sensitive cases. Compile-time coupling to a specific `lex-extension` major version.
+        - *Subprocess.* Third-party ship-it case. Polyglot. Process startup cost per session, then amortised. The default for namespaces published to the wider ecosystem.
+        - *WASM.* Polyglot in-process, sandboxed. Available when the WASM transport ships.
+
+        Mixed-transport namespaces (a Rust crate plus a fallback subprocess for non-Rust embedders) are out of scope until someone needs them.
+
+8. Trust Model
+
+    Handlers run code. Schemas do not. The trust gate applies to handlers, not to schemas; fetching a schema is the same operation as fetching any other versioned text from a Git host.
+
+    The handler trust decision splits along three axes:
+
+    - *Source.* How did the schema arrive? An explicit local path (`--ext-schema ./mit-plasma.yaml`) is implicitly trusted by the user pointing at it. A namespace declared in the project's `lex.toml` is a deliberate dependency. A schema arriving only via cache or marketplace lookup is unvouched-for.
+    - *Surface.* Where is the handler being run? A one-shot CLI invocation, a long-running LSP session, and a CI job have very different exposure profiles.
+    - *Capability.* What does the handler need? A *pure* handler that consumes parameters and returns diagnostics has a small attack surface. A *full* handler that opens files or makes network calls has a much larger one. The schema declares capabilities (`capabilities: { fs: false, net: false }`); the host enforces the declaration by sandboxing the handler at the OS level so that pure handlers cannot escape their declared capabilities even if compromised.
+
+    The default policy can be expressed as a matrix:
+
+    Handler trust defaults:
+        | Source                         | CLI one-shot   | LSP session    | CI            |
+        | `--ext-schema ./local.yaml`    | on             | prompt + pin   | off (flag)    |
+        | `lex.toml` namespace, pure     | on             | on             | on            |
+        | `lex.toml` namespace, full     | prompt + pin   | prompt + pin   | off (flag)    |
+        | cache-only / marketplace       | prompt + pin   | prompt + pin   | off (flag)    |
+    :: table align=lcccc ::
+
+    The pure-handler row is the load-bearing one for the converter ecosystem: declared no-fs, no-net handlers run by default in `lexd convert` without `--enable-handlers`, so a documentation pipeline that fans out to ten extension-rendered formats does not require ten interactive trust prompts.
+
+    When a prompt fires, trust is pinned not just to the namespace, but to the specific handler `command` string declared in the schema. If the upstream schema changes the command between cache invalidations, the user is re-prompted. The decision is persisted per workspace, modelled on VS Code's workspace trust.
+
+9. Hosts
+
+    Three integration surfaces share a single resolver and registry crate (`lex-extension-registry`). All three see the same handlers via the same `LexHandler` trait; differences are lifecycle and which hooks they invoke.
+
+    9.1 lexd CLI
+
+        Reads `lex.toml [labels]` and `--ext-schema` flags at startup, resolves namespaces, instantiates the right transport per namespace, registers handlers in the registry. Subcommands invoke the relevant hooks: `lexd convert --to html` walks the AST and calls `render`; `lexd labels validate` calls `validate`; `lexd labels emit --label X` produces a JSON stream of label invocations for pull-based integration with anything that reads JSON.
+
+    9.2 lex-lsp
+
+        Same registry, longer lifetime. Subprocess handlers stay warm for the editor session. LSP-specific hooks (`hover`, `completion`, `code_action`) are bridged to standard LSP responses; the editor extension stays a UI shell, with no per-namespace code.
+
+        Any editor with LSP support — VS Code, Neovim, Zed, Helix, lexed — gets label-driven features for free, without per-editor extension code. A new editor entering the ecosystem starts fully featured.
+
+    9.3 Public Rust API
+
+        Library consumers embedding Lex in their own Rust applications use the `lex-extension` crate directly. The `Engine` builder accepts both `lex.toml`-driven subprocess handlers and directly-registered native handlers; the registry routes labels to whichever transport delivers them.
+
+        Embedder example:
+
+            use lex::Engine;
+            use lex_extension::{LexHandler, LabelCtx, Format, RenderOut};
+
+            struct MyPlasmaHandler;
+            impl LexHandler for MyPlasmaHandler {
+                fn on_render(&self, ctx: &LabelCtx, fmt: Format) -> Option<RenderOut> {
+                    // produce target-format output for `mit.plasma-specs`
+                    todo!()
+                }
+            }
+
+            let engine = Engine::builder()
+                .with_config_file("lex.toml")?              // wires subprocess handlers
+                .register_handler("mit.plasma", MyPlasmaHandler)
+                .build()?;
+
+            let doc = engine.parse(source)?;
+            let html = engine.render(&doc, Format::Html)?;
+        :: rust ::
+
+10. Explicitly Out of Scope
+
+    10.1 Community Registry
+
+        Some package ecosystems run a single canonical registry mapping short names to URIs (Cargo's crates.io, npm). Lex labels v1 has none. Aliases live in each project's `lex.toml`. This avoids running infrastructure, avoids the alias-collision arbitration problem, and keeps the design honest about its decentralisation. If real-world usage justifies a registry later, it is purely additive.
+
+    10.2 Lockfile
+
+        See [#4.4]. Caching is content-hashed; a `lex.lock` file can be added later without breaking changes.
+
+    10.3 WASM Handlers
+
+        See [#7.3].
+
+    10.4 Schema Inheritance and Composition
 
         A schema cannot extend or include another schema in v1. If two namespaces want to share a parameter set, they duplicate. Composition is a real feature but a different design conversation; the simple flat case wants to ship first.
 
-    8.5 Per-Document Handler Configuration
+    10.5 Per-Document Handler Configuration
 
         A document cannot pass session-wide configuration to a handler in v1 (no `[labels.acme.config]` block in `lex.toml` flowing through to the handler's startup). The handler protocol is intentionally narrow at the start; richer configuration is additive.
 
-9. Future Extensions
+    10.6 Mixed-Transport Namespaces
+
+        A namespace ships one transport in v1. A namespace shipping a Rust crate plus a fallback subprocess (for non-Rust embedders) is out of scope until someone needs it.
+
+11. Future Extensions
 
     Directions the design leaves room for, without committing:
 
-    - *Lockfile* (§3.4). One file, content-hash-pinned, opt-in.
-    - *WASM handlers* (§5.3). Same protocol, sandboxed delivery.
-    - *Community alias registry* (§8.1). Optional layer on top of `lex.toml` aliases.
-    - *Schema composition* (§8.4). Extends the YAML format, no resolver change.
+    - *Lockfile* ([#4.4]). One file, content-hash-pinned, opt-in.
+    - *WASM handlers* ([#7.3]). Same protocol, sandboxed delivery.
+    - *Community alias registry* ([#10.1]). Optional layer on top of `lex.toml` aliases.
+    - *Schema composition* ([#10.4]). Extends the YAML format, no resolver change.
     - *CLI handler invocation.* `lexd labels run acme.sync doc.lex` to trigger handlers outside an editor session, with the same trust prompt.
     - *Cross-namespace dependencies.* A schema declaring it requires another namespace to also be installed (e.g., `acme.task` depends on `acme.user`).
 
     None of these require breaking changes to the surface defined here.
 
-10. Summary
+12. Summary
 
     The proposal adds:
 
     - A `[labels]` block in `lex.toml` mapping namespaces to URI-resolvable schema sources.
-    - A YAML schema format that any namespace ships.
-    - A subprocess handler protocol modelled on LSP, gated by trust.
-    - A single host (`lex-lsp`) that turns schemas and handlers into standard LSP capabilities.
+    - A YAML schema format that any namespace ships, including a body-shape declaration that gives annotations real parsed bodies.
+    - Five named hook integration points (parse, resolve, analyze, render, interact), with namespaces declaring which they participate in.
+    - Three transport tiers (native trait, subprocess, WASM-deferred) carrying one protocol contract.
+    - A trust model split along source × surface × capability that lets pure handlers run by default in CI and `lexd convert`.
+    - Three hosts (`lexd`, `lex-lsp`, public Rust API) sharing a single resolver and registry.
     - The same code path for `lex.*` and third-party namespaces, with the only special-casing being the compiled-in source of `lex.*` schemas and a single denied `lex.toml` key.
 
-    The design keeps the parser pure, keeps the document surface terse, keeps ownership decentralised, and gives third parties the same affordances the core enjoys. It is deliberately narrow: no community registry, no lockfile, no WASM, nothing that can be added later without breaking changes.
+    The design keeps the parser pure, keeps the document surface terse, keeps ownership decentralised, and gives third parties the same affordances the core enjoys — across editor, CLI, and library surfaces. Bounded extensibility is the load-bearing constraint: a Lex parser without any extensions still parses any conforming document.
 
-11. Examples
+    Wire-level details — JSON-RPC method catalogue, payload schemas, AST node shapes, versioning rules — live in the companion document, *Specification: Lex Extension Wire Format* ([./lex-extension-wire.lex]).
 
-    Three reference artifacts illustrate the surface defined above. Each is a complete, copy-pasteable example. The main text refers to them as *Example A*, *Example B*, and *Example C*.
+13. Examples
 
-    11.1 Example A — the `[labels]` block in `lex.toml`
+    Three reference artifacts illustrate the surface defined above. Each is a complete, copy-pasteable example.
 
-        Tap shorthand and full URI forms coexist; both produce the same internal representation. Tap shorthand expands to `github:<value>/lex-labels`. A bare string value is a URI. The expanded table form is used when more than the URI and `rev` are needed (e.g., `subdir`). The `rev` key pins a tag, branch, or commit; absent, the resolver uses the namespace's declared default branch.
+    13.1 Example A — the `[labels]` block in `lex.toml`
+
+        Tap shorthand and full URI forms coexist; both produce the same internal representation. Tap shorthand expands to `github:<value>/lex-labels`. A bare string value is a URI. The expanded table form is used when more than the URI and `rev` are needed (e.g., `subdir`).
 
         `lex.toml` `[labels]` block:
 
@@ -185,115 +330,103 @@ Proposal: Extending Lex via Label Namespaces
             subdir = "labels"
         :: toml ::
 
-    11.2 Example B — schema YAML
+    13.2 Example B — schema YAML
 
-        One file per label, declaring params (with types and defaults), attachment rules (which Lex containers the label may attach to), an optional verbatim-label flag (whether the label is also legal as a verbatim block closing), and optional handler metadata. Type checking is fail-closed: an unknown type in a schema is a schema error.
+        One file per label, declaring params, attachment rules, body shape, capabilities, hook participation, and (optionally) handler metadata.
 
-        Schema for a hypothetical `acme.task`, which attaches to annotations and produces validation diagnostics plus a code action to open the task in a tracker:
+        Schema for a hypothetical `acme.commenting`, which carries a parsed Lex body and produces validation diagnostics plus rendering hooks for HTML and Markdown:
 
             schema_version: 1
-            label: acme.task
+            label: acme.commenting
             description: |
-                References a task in Acme's tracker. Validates that the task ID
-                exists; offers a code action to open it in the browser.
+                A comment thread attached to a Lex element. The body is a full
+                Lex subtree (lists, definitions, nested annotations, embedded
+                verbatim blocks).
 
             params:
-                id:
-                    type:        string
-                    required:    true
-                    pattern:     "^ACME-[0-9]+$"
-                    description: "Acme tracker ID, e.g. ACME-1234."
-                assignee:
-                    type:        string
-                    required:    false
-                    description: "Username of the assignee."
-                priority:
+                role:
                     type:        enum
                     values:
-                        - name: low
-                          description: "Whenever"
-                        - name: medium
-                        - name: high
-                        - name: urgent
-                          description: "Drop everything"
-                    default:     medium
+                        - name: author
+                        - name: editor
+                        - name: reviewer
+                    required:    true
+                resolved:
+                    type:        bool
+                    default:     false
+                thread_id:
+                    type:        string
+                    required:    false
+                    description: "Stable ID for reply threading."
 
             attaches_to:
-                - annotation
+                - paragraph
                 - definition
                 - session
+                - annotation
+                - list_item
 
-            text:
-                presence:    optional
-                description: "Free-form note about the task."
+            body:
+                kind:        lex
+                presence:    required
 
             verbatim_label: false
 
+            capabilities:
+                fs:  false
+                net: false
+
+            hooks:
+                validate: true
+                render:   [html, markdown]
+                hover:    true
+
             handler:
-                command: ["acme-lex-handler", "--config", "${HANDLER_CONFIG}"]
-                events:  [on_label, on_validate, on_resolve_completion]
+                transport:  subprocess
+                command:    ["acme-comment-handler", "--config", "${HANDLER_CONFIG}"]
                 timeout_ms: 2000
         :: yaml ::
 
-    11.3 Example C — handler JSON-RPC protocol
+    13.3 Example C — the LexHandler trait
 
-        Modelled directly on LSP's notification and request shape. The handler binary is spawned with stdin/stdout pipes; messages are LSP-framed JSON-RPC. Diagnostics flow back to the host, which surfaces them through standard `textDocument/publishDiagnostics`. The same shape covers `on_resolve_completion` (returns enriched completion items), `on_hover`, and `on_code_action`. Adding a new event is backward-compatible: handlers ignore methods they do not implement.
+        Native handlers (built-ins, in-process Rust embedders) impl this trait directly. Subprocess and WASM transports are generic adapters that impl the same trait by serialising calls to JSON-RPC or component imports respectively. The exact event payloads (`LabelCtx`, `RenderOut`, `WireAst`, `Diagnostic`) are specified in the companion wire-format document.
 
-        Initialization handshake (host to handler):
+        `LexHandler` trait sketch:
 
-            {
-                "jsonrpc": "2.0",
-                "id": 1,
-                "method": "initialize",
-                "params": {
-                    "lex_version": "0.10.2",
-                    "namespace":   "acme",
-                    "labels":      ["acme.task", "acme.user"]
+            use lex_extension::{
+                LabelCtx, Diagnostic, RenderOut, WireAst, Hover,
+                Completion, CodeAction, Format,
+            };
+
+            pub trait LexHandler: Send + Sync {
+                fn on_label(&self, _ctx: &LabelCtx) {}
+
+                fn on_validate(&self, _ctx: &LabelCtx) -> Vec<Diagnostic> {
+                    Vec::new()
+                }
+
+                fn on_resolve(&self, _ctx: &LabelCtx) -> Option<WireAst> {
+                    None
+                }
+
+                fn on_render(
+                    &self,
+                    _ctx: &LabelCtx,
+                    _fmt: Format,
+                ) -> Option<RenderOut> {
+                    None
+                }
+
+                fn on_hover(&self, _ctx: &LabelCtx) -> Option<Hover> {
+                    None
+                }
+
+                fn on_completion(&self, _ctx: &LabelCtx) -> Vec<Completion> {
+                    Vec::new()
+                }
+
+                fn on_code_action(&self, _ctx: &LabelCtx) -> Vec<CodeAction> {
+                    Vec::new()
                 }
             }
-        :: json ::
-
-        Per-label event (host to handler, no response expected):
-
-            {
-                "jsonrpc": "2.0",
-                "method":  "on_label",
-                "params": {
-                    "label":     "acme.task",
-                    "params":    { "id": "ACME-1234", "priority": "high" },
-                    "text":      null,
-                    "node": {
-                        "kind":    "annotation",
-                        "range":   { "start": [12, 4], "end": [12, 48] },
-                        "origin":  "chapters/02.lex"
-                    }
-                }
-            }
-        :: json ::
-
-        Validation request (host to handler, response expected):
-
-            {
-                "jsonrpc": "2.0",
-                "id": 17,
-                "method": "on_validate",
-                "params": { "label": "acme.task", "params": { "id": "ACME-9999" } }
-            }
-        :: json ::
-
-        Validation response:
-
-            {
-                "jsonrpc": "2.0",
-                "id": 17,
-                "result": {
-                    "diagnostics": [
-                        {
-                            "severity": "error",
-                            "message":  "Task ACME-9999 not found in tracker.",
-                            "range":    { "start": [12, 18], "end": [12, 28] }
-                        }
-                    ]
-                }
-            }
-        :: json ::
+        :: rust ::
