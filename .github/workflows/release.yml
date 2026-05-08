@@ -36,7 +36,7 @@ jobs:
           tar -czf assets.tar.gz assets/
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v3
         with:
           files: |
             specs.tar.gz
