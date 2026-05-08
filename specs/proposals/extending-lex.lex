@@ -210,6 +210,8 @@ Proposal: Extending Lex via Label Namespaces
 
     The pure-handler row is the load-bearing one for the converter ecosystem: declared no-fs, no-net handlers run by default in `lexd convert` without `--enable-handlers`, so a documentation pipeline that fans out to ten extension-rendered formats does not require ten interactive trust prompts.
 
+    The matrix above describes the design target, which is reached only once OS-level capability enforcement is in place. A schema's `capabilities: { fs: false, net: false }` declaration is meaningful only when the host sandboxes the subprocess at the kernel level (seccomp on Linux, sandbox-exec on macOS, AppContainer on Windows) so that the declaration cannot be violated. Until that enforcement ships, the host's implementation conservatively treats *every* subprocess invocation — pure or full — as if it were full: every cell that says "on" for a subprocess handler is enforced as "prompt + pin" or `--enable-handlers`. Native handlers (compiled-in `lex.*` built-ins, in-process Rust embedders) are unaffected; they are trusted by linkage. The flip from the conservative implementation to the matrix above is the role of the sandboxing release.
+
     When a prompt fires, trust is pinned not just to the namespace, but to the specific handler `command` string declared in the schema. If the upstream schema changes the command between cache invalidations, the user is re-prompted. The decision is persisted per workspace, modelled on VS Code's workspace trust.
 
 9. Hosts
@@ -233,11 +235,15 @@ Proposal: Extending Lex via Label Namespaces
         Embedder example:
 
             use lex::Engine;
-            use lex_extension::{LexHandler, LabelCtx, Format, RenderOut};
+            use lex_extension::{LexHandler, LabelCtx, Format, RenderOut, HandlerError};
 
             struct MyPlasmaHandler;
             impl LexHandler for MyPlasmaHandler {
-                fn on_render(&self, ctx: &LabelCtx, fmt: Format) -> Option<RenderOut> {
+                fn on_render(
+                    &self,
+                    ctx: &LabelCtx,
+                    fmt: Format,
+                ) -> Result<Option<RenderOut>, HandlerError> {
                     // produce target-format output for `mit.plasma-specs`
                     todo!()
                 }
@@ -395,38 +401,53 @@ Proposal: Extending Lex via Label Namespaces
 
             use lex_extension::{
                 LabelCtx, Diagnostic, RenderOut, WireAst, Hover,
-                Completion, CodeAction, Format,
+                Completion, CodeAction, Format, HandlerError,
             };
 
             pub trait LexHandler: Send + Sync {
                 fn on_label(&self, _ctx: &LabelCtx) {}
 
-                fn on_validate(&self, _ctx: &LabelCtx) -> Vec<Diagnostic> {
-                    Vec::new()
+                fn on_validate(
+                    &self,
+                    _ctx: &LabelCtx,
+                ) -> Result<Vec<Diagnostic>, HandlerError> {
+                    Ok(Vec::new())
                 }
 
-                fn on_resolve(&self, _ctx: &LabelCtx) -> Option<WireAst> {
-                    None
+                fn on_resolve(
+                    &self,
+                    _ctx: &LabelCtx,
+                ) -> Result<Option<WireAst>, HandlerError> {
+                    Ok(None)
                 }
 
                 fn on_render(
                     &self,
                     _ctx: &LabelCtx,
                     _fmt: Format,
-                ) -> Option<RenderOut> {
-                    None
+                ) -> Result<Option<RenderOut>, HandlerError> {
+                    Ok(None)
                 }
 
-                fn on_hover(&self, _ctx: &LabelCtx) -> Option<Hover> {
-                    None
+                fn on_hover(
+                    &self,
+                    _ctx: &LabelCtx,
+                ) -> Result<Option<Hover>, HandlerError> {
+                    Ok(None)
                 }
 
-                fn on_completion(&self, _ctx: &LabelCtx) -> Vec<Completion> {
-                    Vec::new()
+                fn on_completion(
+                    &self,
+                    _ctx: &LabelCtx,
+                ) -> Result<Vec<Completion>, HandlerError> {
+                    Ok(Vec::new())
                 }
 
-                fn on_code_action(&self, _ctx: &LabelCtx) -> Vec<CodeAction> {
-                    Vec::new()
+                fn on_code_action(
+                    &self,
+                    _ctx: &LabelCtx,
+                ) -> Result<Vec<CodeAction>, HandlerError> {
+                    Ok(Vec::new())
                 }
             }
         :: rust ::
