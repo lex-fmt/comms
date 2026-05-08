@@ -160,7 +160,7 @@ Specification: Lex Extension Wire Format
 
         A `null` replacement leaves the original node in place (the handler chose not to splice). A non-null replacement is a single block-level wire AST node; to splice multiple siblings, return a `{ "kind": "document" }` wrapper whose children are unwrapped during the splice.
 
-        Cycle detection: the host tracks which `(label, params)` invocations are in flight up the resolution stack and refuses to recurse into the same invocation. Default depth limit is 32; the host returns `IncludeError::DepthExceeded` style diagnostics on overflow.
+        Cycle detection: the host tracks which `(label, origin)` invocations are in flight up the resolution stack and refuses to recurse into the same invocation, where `origin` is the source position of the invocation site (file path + start line/column). Tracking the invocation site instead of `(label, params)` defeats handlers that vary parameters per call (random IDs, timestamps) and would otherwise bypass the check. The depth limit (default 32) remains as the ultimate backstop and produces `IncludeError::DepthExceeded`-style diagnostics on overflow.
 
     4.4 on_render (request)
 
