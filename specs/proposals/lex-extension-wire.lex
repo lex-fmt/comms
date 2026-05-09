@@ -8,7 +8,7 @@ Specification: Lex Extension Wire Format
     - *Host implementers* who need to know how to dispatch hook events.
     - *Toolchain maintainers* who need to know what counts as a breaking change.
 
-    Versioning rule: this format is identified by `wire_version`, an integer that increments on any breaking change to message shapes. Adding a new method, a new optional field, or a new node kind is non-breaking. Removing a field, changing a field type, or changing a method's semantics is breaking. Hosts and handlers exchange `wire_version` in the `initialize` handshake and refuse to communicate on mismatch. The current version is `1`.
+    Versioning rule: this format is identified by `wire_version`, an integer that increments on any breaking change to message shapes. New methods, new optional fields, and new values for string-shaped enums (severity, completion kind, etc.) are non-breaking; *new block AST kinds* and removing or retyping fields are breaking and require bumping the version. Hosts and handlers exchange `wire_version` in the `initialize` handshake and negotiate to the highest version both sides understand. See [#6] for the full policy. The current version is `1`.
 
 1. Transport Framing
 
@@ -55,7 +55,7 @@ Specification: Lex Extension Wire Format
         - `annotation` — labelled metadata. Fields: `label`, `params`, `body` (`null`, string, or `{ "kind": "block", "children": [...] }`).
         - `blank` — a deliberate blank-line group, surfaced when round-trip fidelity matters.
 
-        Handlers must ignore unknown `kind` values: a forward-compatible host may add node kinds in non-breaking versions.
+        The set of block `kind` values is closed within a `wire_version`. A host or handler that receives a wire AST containing an unknown block `kind` MUST refuse the message: subprocess transports respond with a JSON-RPC error (code `-32602`, "invalid params") naming the offending kind; for parse-time wire-AST construction inside the host, the host emits a document-root diagnostic and does not dispatch hooks that would receive the malformed tree. The `initialize` handshake at [#3] catches outright `wire_version` mismatches at session start; this rule covers the residual case of a peer producing a wire AST that exceeds the negotiated version. See [#6] for how new kinds become available at a bumped `wire_version`.
 
     2.3 Inlines
 
@@ -194,6 +194,8 @@ Specification: Lex Extension Wire Format
             }
         :: json ::
 
+        Hosts and handlers MUST treat unknown `format` values as `plaintext`.
+
     4.6 on_completion (request)
 
         Method: `on_completion`. Params: `LabelCtx & { "position": [line, col], "trigger": string }`. Result: `{ "items": [Completion] }`.
@@ -278,10 +280,8 @@ Specification: Lex Extension Wire Format
 
     - New methods.
     - New optional fields on existing payloads.
-    - New node kinds in the wire AST. Handlers must ignore unknown kinds.
-    - New inline kinds. Handlers must ignore unknown kinds.
     - New optional params for existing methods. Handlers must ignore unknown params.
-    - New severity levels, ref kinds, completion kinds, code-action kinds, render formats. Handlers must treat unknown values as the documented fallback (`info`, `general`, `value`, `refactor`, `-32601` respectively).
+    - New severity levels, ref kinds, completion kinds, code-action kinds, hover formats, render formats. Hosts and handlers MUST deserialise unknown wire values as the documented fallback (`info`, `general`, `value`, `refactor`, `plaintext`, and `-32601` respectively). Most of these enums are produced by handlers and consumed by the host, but the rule applies symmetrically.
 
     Breaking changes (version bump required):
 
@@ -290,6 +290,10 @@ Specification: Lex Extension Wire Format
     - Changing the type of an existing field.
     - Changing the semantics of an existing method.
     - Changing the meaning of an existing severity / kind / format value.
+    - *Adding a new block node kind to the wire AST.* Block kinds are structural; silently ignoring an unknown `kind` drops document content, with no safe fallback that preserves meaning. New block kinds therefore bump `wire_version`. Backwards-compatibility with handlers running an older version is the host's responsibility: hosts emit only kinds expressible in the negotiated session version, and surface a version-skew diagnostic when a document genuinely requires a kind the negotiated version cannot express. The handshake-level negotiation rule (highest common version wins; refuse only when no overlap exists) is unchanged.
+    - *Adding a new inline kind* — same reasoning.
+
+    The asymmetry between string-shaped enums (non-breaking, fall back to a documented default) and block-AST kinds (breaking, bump version) is deliberate. String values like severities are display metadata: an unknown severity surfaced as `info` is mildly imprecise but harmless. A node kind dropped silently loses content, and there is no safe fallback that preserves document meaning.
 
     The `lex-extension` Rust crate's major version tracks `wire_version`. A handler built against `lex-extension` 1.x speaks `wire_version: 1`. The crate's minor and patch versions reflect non-breaking additions and bug fixes.
 
