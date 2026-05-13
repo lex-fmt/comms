@@ -1,4 +1,4 @@
-:: doc.note severity=info :: Document preface.
+:: test.note severity=info :: Document preface.
 
 1. Intro
 

@@ -133,6 +133,7 @@ The lex language
         | lex.metadata.tags       | tags        |
         | lex.metadata.date       | date        |
         | lex.include             | include     |
+        | lex.notes               | notes       |
         :: table align=ll ::
 
         Labels not listed here have no shortcut form — the prefix-stripped form is still accepted. Skipped on purpose because their bare form would read ambiguously: `lex.metadata.template`, `lex.metadata.category`, `lex.metadata.publishing-date`, `lex.metadata.front-matter`.
