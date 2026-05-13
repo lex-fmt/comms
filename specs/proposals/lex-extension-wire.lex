@@ -246,11 +246,11 @@ Specification: Lex Extension Wire Format
 
     4.8 on_format (request)
 
-        Method: `on_format`. Params: `{ "node": WireAst, "options"?: object }`. Result: `{ "annotation": LexAnnotation | null }`.
+        Method: `on_format`. Params: `{ "label": string, "params": [[string, string]], "node": WireAst, "format_options": optional object }`. Result: `{ "annotation": LexAnnotation | null }`.
 
         Returns the Lex-source representation of a typed AST subtree owned by the handler's namespace. Fires during `lexd format`, `to_lex`, and any library-driven IR→Lex pass — the inverse of `on_resolve`, and the reverse-direction sibling of `on_render` for the Lex target format.
 
-        The handler receives a `WireAst` subtree (typically a single block node such as `verbatim`, `annotation`, or a structural node previously lifted by `on_resolve`) and returns a `LexAnnotation` describing how to write the node back as Lex source. A `null` result lets the host fall back to its built-in formatter for the underlying node kind.
+        The handler receives the originating `label` and `params` (so a namespace with several labels driving the same node kind can route on the label string), the `WireAst` subtree (typically a single block node such as `verbatim`, `annotation`, or a structural node previously lifted by `on_resolve`), plus an optional `format_options` object whose shape is namespace-defined. The handler returns a `LexAnnotation` describing how to write the node back as Lex source. A `null` result lets the host fall back to its built-in formatter for the underlying node kind — there is no separate "not handled" error code; `null` is the single signal.
 
         LexAnnotation shape:
 
@@ -268,7 +268,7 @@ Specification: Lex Extension Wire Format
 
         Forward-compatibility note: the LexAnnotation shape is closed within `wire_version`. Future expansions for rich-body annotations (lists, sessions, tables as the body of an annotation) will land as an optional `body_ast: WireAst` field on the same shape — handlers may set either `body` (text) or `body_ast` (tree), not both. Until that lands, handlers emitting non-text bodies must serialize them into the text `body` themselves.
 
-        Error handling: a handler that cannot format a given node kind returns a `-32601`-class error, and the host falls back to default formatting for the node. Errors during formatting fold into a single diagnostic at the node's range; the formatter continues with subsequent nodes.
+        Error handling: a handler that does not support a given node kind returns `"annotation": null` (the same fallback signal used for "I produced nothing here"); the host then defaults to its built-in formatter. Genuine handler failures (panics, internal errors during formatting) return a JSON-RPC error per §5 and fold into a single diagnostic at the node's range; the formatter continues with subsequent nodes.
 
 5. Errors
 
