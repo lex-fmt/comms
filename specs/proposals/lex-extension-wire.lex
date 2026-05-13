@@ -244,6 +244,32 @@ Specification: Lex Extension Wire Format
             }
         :: json ::
 
+    4.8 on_format (request)
+
+        Method: `on_format`. Params: `{ "node": WireAst, "options"?: object }`. Result: `{ "annotation": LexAnnotation | null }`.
+
+        Returns the Lex-source representation of a typed AST subtree owned by the handler's namespace. Fires during `lexd format`, `to_lex`, and any library-driven IR→Lex pass — the inverse of `on_resolve`, and the reverse-direction sibling of `on_render` for the Lex target format.
+
+        The handler receives a `WireAst` subtree (typically a single block node such as `verbatim`, `annotation`, or a structural node previously lifted by `on_resolve`) and returns a `LexAnnotation` describing how to write the node back as Lex source. A `null` result lets the host fall back to its built-in formatter for the underlying node kind.
+
+        LexAnnotation shape:
+
+            {
+              "label":          string,
+              "params":         [[string, string]],
+              "body":           string,
+              "verbatim_label": boolean
+            }
+        :: json ::
+
+        `label` is the canonical fully-qualified label (`lex.tabular.table`, `acme.commenting`, …). `params` are emitted in `key=value` order, with quoting decisions left to the host. `body` is the verbatim or inline text body, empty for marker-form annotations. `verbatim_label` selects between the verbatim closing form (subject-line content + `:: label ::` closer) and the inline annotation form (`:: label :: text` or `:: label ::` followed by indented content).
+
+        Use cases: a `lex.tabular.table` handler reads a typed `table` wire node and emits the pipe-table syntax under a `:: lex.tabular.table ::` verbatim. A `mit.plasma-specs` namespace converts its typed properties back to a parameter-encoded `:: mit.plasma-specs ::` annotation. Without this hook, structural transformations are one-way — the existing built-in `lex.tabular.*` and `lex.media.*` handlers in `lex-babel` provide bidirectional round-trip by hardcoded reverse pattern-matching on `DocNode` variants; `on_format` generalises that to third-party namespaces.
+
+        Forward-compatibility note: the LexAnnotation shape is closed within `wire_version`. Future expansions for rich-body annotations (lists, sessions, tables as the body of an annotation) will land as an optional `body_ast: WireAst` field on the same shape — handlers may set either `body` (text) or `body_ast` (tree), not both. Until that lands, handlers emitting non-text bodies must serialize them into the text `body` themselves.
+
+        Error handling: a handler that cannot format a given node kind returns a `-32601`-class error, and the host falls back to default formatting for the node. Errors during formatting fold into a single diagnostic at the node's range; the formatter continues with subsequent nodes.
+
 5. Errors
 
     A handler that hits an internal error returns a JSON-RPC error object:
