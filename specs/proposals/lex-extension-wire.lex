@@ -51,7 +51,7 @@ Specification: Lex Extension Wire Format
         - `list` — ordered or unordered. Fields: `marker_style` (string), `items` (array of `list_item`).
         - `list_item` — one item. Fields: `inlines`, `children` (nested blocks).
         - `verbatim` — raw content with a label. Fields: `label`, `params` (object), `body_text` (string).
-        - `table` — tabular content. Fields: `caption`, `header_rows` (int), `column_aligns` (array of string), `rows` (array of array of cell), `footnotes`. `column_aligns` carries one entry per column; values are `"left"`, `"center"`, `"right"`, or `""` (no alignment). The array's length matches the widest row in `rows`; cells in shorter rows treat trailing columns as `""`. Cells past `column_aligns.length` (in a row that exceeds the declared column count) also default to `""`.
+        - `table` — tabular content. Fields: `caption`, `header_rows` (int), `column_aligns` (array of string), `rows` (array of array of cell), `footnotes`. `column_aligns` carries one entry per column; values are `"left"`, `"center"`, `"right"`, or `""` (no alignment). `column_aligns.length` defines the table's column count: it MUST equal the longest row in `rows`. Cells in shorter rows are treated as missing (`""` alignment, empty content); rows MUST NOT exceed `column_aligns.length`. A peer that produces a wire AST violating this invariant is rejected under §2.2's malformed-tree rule.
         - `image` — media node with explicit fields. Fields: `src` (string), `alt` (string), `title` (optional string). Produced by `on_resolve` for `lex.media.image`-class verbatim labels; carries the same data the host would otherwise have flattened into `verbatim.params`.
         - `video` — media node. Fields: `src` (string), `title` (optional string), `poster` (optional string).
         - `audio` — media node. Fields: `src` (string), `title` (optional string).
@@ -251,7 +251,7 @@ Specification: Lex Extension Wire Format
 
         Method: `on_format`. Params: `FormatCtx`. Result: `{ "annotation": LexAnnotationOut | null }`.
 
-        Returns the Lex-source representation of a typed AST subtree the handler's namespace owns. It is the inverse of [#4.3] `on_resolve`: given a typed `WireNode` produced earlier in the pipeline, the handler describes the label, parameters, body, and form the host emits as Lex source. Fires when the host serializes a document back to `.lex` — `lexd format`, library-driven `to_lex` calls, and the reverse direction of round-trip conversion.
+        Returns the Lex-source representation of a typed AST subtree the handler's namespace owns. It is the inverse of [#4.3] `on_resolve`: given a typed `WireAst` node produced earlier in the pipeline, the handler describes the label, parameters, body, and form the host emits as Lex source. Fires when the host serializes a document back to `.lex` — `lexd format`, library-driven `to_lex` calls, and the reverse direction of round-trip conversion.
 
         A `null` annotation lets the host fall back to its built-in formatter for the underlying node kind — there is no separate "not handled" error code.
 
