@@ -2,7 +2,9 @@ The lex.include Annotation
 
 Introduction
 
-    `:: lex.include src="..." ::` is a reserved annotation that pulls another Lex file's content into the host document at parse-plus-resolution time. It is not a new element — it uses the standard annotation surface — but its label `lex.include` is reserved by the core, and the resolver in `lex_core::lex::includes` gives it specific behaviour at resolution time.
+    `:: include src="..." ::` is a reserved annotation that pulls another Lex file's content into the host document at parse-plus-resolution time. It is not a new element — it uses the standard annotation surface — but its canonical label `lex.include` is reserved by the core, and the resolver in `lex_core::lex::includes` gives it specific behaviour at resolution time.
+
+    The label has three accepted spellings — `include` (the user-facing shortcut, used throughout this document), `lex.include` (the canonical, transmitted on the extension wire), and the prefix-stripped form (which is `include` again since the canonical is single-segment). See [../general.lex#4] for the full label namespace model.
 
     Authors: this is the canonical reference for the *behaviour* of an include. The original design rationale lives in `specs/proposals/done/includes.lex`; that document is frozen and kept for historical context.
 
@@ -12,7 +14,7 @@ Syntax
 
     Always the marker form of an annotation, with a mandatory `src` parameter:
 
-        :: lex.include src="chapters/01.lex" ::
+        :: include src="chapters/01.lex" ::
 
     The annotation may appear anywhere a regular annotation is legal: at document root, inside a session, inside a definition, inside a list item, or inside another annotation's block content.
 
@@ -98,7 +100,7 @@ Out of Scope
     - Variable substitution / templating: never. Lex is not a template language.
     - Shell commands as src: never. Arbitrary code execution at resolution time is an attack vector with no legitimate core use case.
     - Partial includes (lines 10-20, only session 2.1): not in v1. Better atomization is the substitute — split the file.
-    - Cross-document references (`[book#2.3]` after `:: lex.include src="book.lex" as="book" ::`): not in v1. Needs a namespace-design pass of its own.
+    - Cross-document references (`[book#2.3]` after `:: include src="book.lex" as="book" ::`): not in v1. Needs a namespace-design pass of its own.
 
 Examples
 
@@ -106,17 +108,17 @@ Examples
 
         Book Title
 
-            :: lex.include src="chapters/01.lex" ::
+            :: include src="chapters/01.lex" ::
 
-            :: lex.include src="chapters/02.lex" ::
+            :: include src="chapters/02.lex" ::
 
-            :: lex.include src="chapters/03.lex" ::
+            :: include src="chapters/03.lex" ::
 
     Inside a session:
 
         2. Appendix
 
-            :: lex.include src="appendix/glossary.lex" ::
+            :: include src="appendix/glossary.lex" ::
 
     Including a fragment with no top-level sessions (a thread of review annotations, for instance):
 
@@ -124,11 +126,11 @@ Examples
 
             Some content.
 
-            :: lex.include src="reviews/intro-thread.lex" ::
+            :: include src="reviews/intro-thread.lex" ::
 
     Root-absolute path (resolves under the project root, regardless of the host file's depth):
 
-        :: lex.include src="/shared/standard-header.lex" ::
+        :: include src="/shared/standard-header.lex" ::
 
 Learn More
 
