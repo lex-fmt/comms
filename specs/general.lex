@@ -40,7 +40,7 @@ The lex language
 
         Annotation content can include paragraphs, lists, definitions, verbatim blocks, tables, and nested annotations, but cannot contain sessions.
 
-        The `lex.*` annotation label prefix is reserved for core-defined semantics (e.g. `lex.include`, see specs/elements/lex.include.lex). Third-party tooling must not author labels in this namespace; the core may add new `lex.*` labels without coordinating with downstream. Non-reserved labels remain freely available for extensions (`mycompany.review`, `docs.embed`, etc.).
+        Labels carry namespace semantics that determine who owns them, how they're spelled, and how they round-trip through formatting. See [#4] for the full label-namespace model — reserved prefixes (`lex.*`, `doc.*`), bare-form aliases (the user-facing voice), and the community shape (`owner.repo`). Annotations are the most visible carrier of labels, but the same model applies to verbatim closers and table closers.
 
     2. Lists
 
@@ -87,3 +87,81 @@ The lex language
         Paragraphs use look-ahead to detect element boundaries: they stop before list starts (2+ list-item-lines) and definition starts (subject-line + indent). This means blank lines between paragraphs and lists or definitions are optional.
 
         Paragraphs are also the catch-all: if text doesn't match any other element pattern, it's a paragraph. This makes lex forgiving — ambiguous content defaults to paragraph.
+
+4. Label Namespaces
+
+    Labels appear on annotation markers (`:: label ::`), on verbatim closers (`:: label ::` after indented content), and on table closers (the special `table` closer). A label is an identifier optionally containing dot-separated segments. The shape of those segments selects a namespace, which determines ownership, allowed authors, and the spelling the parser canonicalizes to.
+
+    Four namespace classes exist:
+
+    - *Reserved-canonical*: `lex.*`. Owned by the core; carries the canonical spelling of built-in semantics.
+    - *Reserved-forbidden*: `doc.*`. Held back from third-party authoring; not aliased to anything. Authoring `doc.<anything>` is a parse error.
+    - *Blessed user-facing*: bare names (no dots) and prefix-stripped forms (one or more dots, not starting with a reserved prefix). Aliases for the `lex.*` canonical via the rules in [#4.2]. This is the form documentation, examples, and editor output lead with.
+    - *Community*: `owner.repo` shape (one or more dots, first segment not reserved). Freely available for extensions (`acme.task`, `mycompany.review`). Owned by whoever publishes them; the registry, when it exists, governs discovery.
+
+    An input that does not match a reserved namespace, does not resolve through [#4.2] to a known canonical, and is not registered as a community label is rejected at parse time.
+
+    4.1 Reserved namespaces
+
+        The `lex.*` prefix is reserved for core-defined semantics. The core may add new `lex.*` labels without coordinating with downstream; third-party tooling MUST NOT author labels in this namespace. The canonical spelling is the form transmitted over the extension wire and the form recorded in spec/reference documentation.
+
+        The `doc.*` prefix is reserved and forbidden. It was the pre-extension canonical for core semantics (`doc.table`, `doc.image`, etc.) and is held back to prevent third-party squatting on the historical names. The parser rejects any `doc.<anything>` label with a diagnostic suggesting the blessed equivalent.
+
+    4.2 Bare and stripped forms — the user-facing voice
+
+        Every `lex.*` canonical is reachable via the prefix-strip rule below; a curated subset is also reachable via a one-segment shortcut. Whichever forms apply, they are accepted at parse time, resolve to the same canonical, and are dispatched identically to the extension registry.
+
+        Rule 1 — prefix strip (universal, mechanical). Every `lex.X.Y.Z` canonical accepts `X.Y.Z` as input. The parser prepends `lex.` and resolves. No curation; the rule applies to every label in the `lex.*` namespace.
+
+        Examples:
+
+        - `metadata.author` resolves to `lex.metadata.author`.
+        - `tabular.table` resolves to `lex.tabular.table`.
+        - `media.image` resolves to `lex.media.image`.
+        - `include` resolves to `lex.include` (single-segment local part; the strip rule reduces to the identity here).
+
+        Rule 2 — shortcut (curated, opt-in per label). A small hand-picked set of high-traffic labels gets an additional one-segment form. The shortcut table is normative and lives in this specification:
+
+        | Canonical               | Shortcut    |
+        | ---                     | ---         |
+        | lex.tabular.table       | table       |
+        | lex.media.image         | image       |
+        | lex.media.video         | video       |
+        | lex.media.audio         | audio       |
+        | lex.metadata.author     | author      |
+        | lex.metadata.title      | title       |
+        | lex.metadata.tags       | tags        |
+        | lex.metadata.date       | date        |
+        | lex.include             | include     |
+        :: table align=ll ::
+
+        Labels not listed here have no shortcut form — the prefix-stripped form is still accepted. Skipped on purpose because their bare form would read ambiguously: `lex.metadata.template`, `lex.metadata.category`, `lex.metadata.publishing-date`, `lex.metadata.front-matter`.
+
+        Adding a label to the shortcut table is a minor version bump. Removing a label from the shortcut table is a breaking change and should not happen.
+
+        Resolution order at parse time:
+
+        1. If the input matches an entry in the shortcut table, resolve to that canonical.
+        2. Otherwise, look up the input as-is. This succeeds for `lex.*` canonicals authored verbatim and for registered community labels (`acme.task`, `mycompany.review`).
+        3. Otherwise, look up `lex.<input>` (the prefix-strip rule).
+        4. Otherwise, reject.
+
+        Step 2 preempts step 3 deliberately: a registered community label always wins over the prefix-strip rule. This means a future core release adding `lex.acme.task` cannot retroactively shadow a third party's `acme.task` registration — the community input keeps resolving to the community handler, and `lex.acme.task`'s stripped form is unreachable for documents using that input. Core's freedom to introduce new `lex.<owner>.<repo>` canonicals is constrained by this rule; in practice core does not author `lex.*` canonicals whose stripped form follows the community shape.
+
+    4.3 Form preservation
+
+        Lex documents round-trip without rewriting the user's choice of form. A document that uses `:: author ::` formats back as `:: author ::`; one that uses `:: metadata.author ::` formats back as `:: metadata.author ::`; one that uses `:: lex.metadata.author ::` formats back unchanged.
+
+        The parser categorizes each label site as one of `Canonical`, `Stripped`, `Shortcut`, or `Community` based on what it saw, and records that classification alongside the resolved canonical. Downstream stages (formatter, hover, diagnostics, code actions) consult the classification when surfacing the label back to the user. `Canonical`/`Stripped`/`Shortcut` cover the three input forms of a `lex.*` label; `Community` covers labels resolved through step 2 of [#4.2]'s resolution order as a registered third-party label — those have a single accepted spelling and round-trip unchanged.
+
+        The form classification is host-side state. The extension wire format always carries the canonical spelling; handlers dispatch on canonical and have no awareness of which form the user originally wrote.
+
+    4.4 Community labels
+
+        Labels not in `lex.*`, not in `doc.*`, and not in the bare/stripped/shortcut input layer fall into the community namespace. Today these are user-defined and registered through the extension system's `Schema.label` field; a future registry will provide discovery.
+
+        Community labels are shape-distinct from blessed forms — they always contain at least one dot, with the first segment naming the owner. A bare label like `task` is never a community label; only `acme.task` is. This separation lets the parser route `task` unambiguously through the shortcut layer (if listed) or stripped-form layer (if `lex.task` exists), without ever colliding with a community label.
+
+    4.5 Documentation voice
+
+        User-facing documentation, examples, and editor output use the shortest accepted form: the shortcut where available, the prefix-stripped form otherwise, the canonical only when neither alias exists. The `lex.*` canonical appears in spec text and reference documentation explaining the alias machinery, and on the extension wire — not in everyday tutorial content.
