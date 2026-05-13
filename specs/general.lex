@@ -99,7 +99,7 @@ The lex language
     - *Blessed user-facing*: bare names (no dots) and prefix-stripped forms (one or more dots, not starting with a reserved prefix). Aliases for the `lex.*` canonical via the rules in [#4.2]. This is the form documentation, examples, and editor output lead with.
     - *Community*: `owner.repo` shape (one or more dots, first segment not reserved). Freely available for extensions (`acme.task`, `mycompany.review`). Owned by whoever publishes them; the registry, when it exists, governs discovery.
 
-    Anything that does not match a reserved namespace, resolve via [#4.2] to a known canonical, or come from a registered community handler is rejected at parse time.
+    An input that does not match a reserved namespace, does not resolve through [#4.2] to a known canonical, and is not registered as a community label is rejected at parse time.
 
     4.1 Reserved namespaces
 
@@ -109,7 +109,7 @@ The lex language
 
     4.2 Bare and stripped forms — the user-facing voice
 
-        Every `lex.*` canonical is reachable via two additional input forms. Both are accepted at parse time, both resolve to the same canonical, both are dispatched identically to the extension registry.
+        Every `lex.*` canonical is reachable via the prefix-strip rule below; a curated subset is also reachable via a one-segment shortcut. Whichever forms apply, they are accepted at parse time, resolve to the same canonical, and are dispatched identically to the extension registry.
 
         Rule 1 — prefix strip (universal, mechanical). Every `lex.X.Y.Z` canonical accepts `X.Y.Z` as input. The parser prepends `lex.` and resolves. No curation; the rule applies to every label in the `lex.*` namespace.
 
@@ -118,7 +118,7 @@ The lex language
         - `metadata.author` resolves to `lex.metadata.author`.
         - `tabular.table` resolves to `lex.tabular.table`.
         - `media.image` resolves to `lex.media.image`.
-        - `include` resolves to `lex.include` (single-segment canonical; the strip rule leaves it unchanged).
+        - `include` resolves to `lex.include` (single-segment local part; the strip rule reduces to the identity here).
 
         Rule 2 — shortcut (curated, opt-in per label). A small hand-picked set of high-traffic labels gets an additional one-segment form. The shortcut table is normative and lives in this specification:
 
@@ -139,13 +139,20 @@ The lex language
 
         Adding a label to the shortcut table is a minor version bump. Removing a label from the shortcut table is a breaking change and should not happen.
 
-        Resolution order at parse time: try shortcut → try `lex.<input>` (the prefix-strip rule) → try `<input>` as a registered community label → reject.
+        Resolution order at parse time:
+
+        1. If the input matches an entry in the shortcut table, resolve to that canonical.
+        2. Otherwise, look up the input as-is. This succeeds for `lex.*` canonicals authored verbatim and for registered community labels (`acme.task`, `mycompany.review`).
+        3. Otherwise, look up `lex.<input>` (the prefix-strip rule).
+        4. Otherwise, reject.
+
+        Step 2 preempts step 3 deliberately: a registered community label always wins over the prefix-strip rule. This means a future core release adding `lex.acme.task` cannot retroactively shadow a third party's `acme.task` registration — the community input keeps resolving to the community handler, and `lex.acme.task`'s stripped form is unreachable for documents using that input. Core's freedom to introduce new `lex.<owner>.<repo>` canonicals is constrained by this rule; in practice core does not author `lex.*` canonicals whose stripped form follows the community shape.
 
     4.3 Form preservation
 
         Lex documents round-trip without rewriting the user's choice of form. A document that uses `:: author ::` formats back as `:: author ::`; one that uses `:: metadata.author ::` formats back as `:: metadata.author ::`; one that uses `:: lex.metadata.author ::` formats back unchanged.
 
-        The parser categorizes each label site as `Canonical`, `Stripped`, or `Shortcut` based on what it saw, and records that classification alongside the resolved canonical. Downstream stages (formatter, hover, diagnostics, code actions) consult the classification when surfacing the label back to the user.
+        The parser categorizes each label site as one of `Canonical`, `Stripped`, `Shortcut`, or `Community` based on what it saw, and records that classification alongside the resolved canonical. Downstream stages (formatter, hover, diagnostics, code actions) consult the classification when surfacing the label back to the user. `Canonical`/`Stripped`/`Shortcut` cover the three input forms of a `lex.*` label; `Community` covers labels resolved through step 2 of [#4.2]'s resolution order as a registered third-party label — those have a single accepted spelling and round-trip unchanged.
 
         The form classification is host-side state. The extension wire format always carries the canonical spelling; handlers dispatch on canonical and have no awareness of which form the user originally wrote.
 

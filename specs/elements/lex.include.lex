@@ -4,7 +4,7 @@ Introduction
 
     `:: include src="..." ::` is a reserved annotation that pulls another Lex file's content into the host document at parse-plus-resolution time. It is not a new element — it uses the standard annotation surface — but its canonical label `lex.include` is reserved by the core, and the resolver in `lex_core::lex::includes` gives it specific behaviour at resolution time.
 
-    The label has three accepted spellings — `include` (the user-facing shortcut, used throughout this document), `lex.include` (the canonical, transmitted on the extension wire), and the prefix-stripped form (which is `include` again since the canonical is single-segment). See [../general.lex#4] for the full label namespace model.
+    Two distinct spellings reach this label: `include` (the user-facing shortcut, used throughout this document) and `lex.include` (the canonical, transmitted on the extension wire). The prefix-strip rule formally also produces `include` from the canonical, but since the local part is one segment, it coincides with the shortcut form rather than introducing a third spelling. See [../general.lex#4] for the full label namespace model.
 
     Authors: this is the canonical reference for the *behaviour* of an include. The original design rationale lives in `specs/proposals/done/includes.lex`; that document is frozen and kept for historical context.
 
