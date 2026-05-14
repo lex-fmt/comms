@@ -11,7 +11,7 @@ Specs, documentation, and assets for [Lex](https://github.com/lex-fmt/lex) — a
   - `elements/` — per-element test fixtures
   - `trifecta/` — integration test fixtures
   - `benchmark/` — real-world document fixtures
-- `docs/` — website content for [lex.ing](https://lex.ing)
+- `docs/` — website content for [lex.ing](https://lex.ing) (source for the deployed site)
 - `assets/` — images and resources
 
 ## Usage
