@@ -8,7 +8,7 @@ Specification: Lex Extension Wire Format
     - *Host implementers* who need to know how to dispatch hook events.
     - *Toolchain maintainers* who need to know what counts as a breaking change.
 
-    Versioning rule: this format is identified by `wire_version`, an integer that increments on any breaking change to message shapes. New methods, new optional fields, and new values for string-shaped enums (severity, completion kind, etc.) are non-breaking; *new block AST kinds* and removing or retyping fields are breaking and require bumping the version. Hosts and handlers exchange `wire_version` in the `initialize` handshake and negotiate to the highest version both sides understand. See [#6] for the full policy. The current version is `1`.
+    Versioning rule: this format is identified by `wire_version`, an integer that increments on any breaking change to message shapes. New methods, new optional fields, and new values for string-shaped enums (severity, completion kind, etc.) are non-breaking; *new block AST kinds* and removing or retyping fields are breaking and require bumping the version. Hosts and handlers exchange `wire_version` in the `initialize` handshake and negotiate to the highest version both sides understand. See [#6] for the full policy. The current version is `2`.
 
 1. Transport Framing
 
@@ -51,7 +51,10 @@ Specification: Lex Extension Wire Format
         - `list` — ordered or unordered. Fields: `marker_style` (string), `items` (array of `list_item`).
         - `list_item` — one item. Fields: `inlines`, `children` (nested blocks).
         - `verbatim` — raw content with a label. Fields: `label`, `params` (object), `body_text` (string).
-        - `table` — tabular content. Fields: `caption`, `header_rows` (int), `align` (string), `rows` (array of array of cell), `footnotes`.
+        - `table` — tabular content. Fields: `caption`, `header_rows` (int), `column_aligns` (array of string), `rows` (array of array of cell), `footnotes`. `column_aligns` carries one entry per column; values are `"left"`, `"center"`, `"right"`, or `""` (no alignment). `column_aligns.length` defines the table's column count: it MUST equal the longest row in `rows`. Cells in shorter rows are treated as missing (`""` alignment, empty content); rows MUST NOT exceed `column_aligns.length`. A peer that produces a wire AST violating this invariant is rejected under §2.2's malformed-tree rule.
+        - `image` — media node with explicit fields. Fields: `src` (string), `alt` (string), `title` (optional string). Produced by `on_resolve` for `lex.media.image`-class verbatim labels; carries the same data the host would otherwise have flattened into `verbatim.params`.
+        - `video` — media node. Fields: `src` (string), `title` (optional string), `poster` (optional string).
+        - `audio` — media node. Fields: `src` (string), `title` (optional string).
         - `annotation` — labelled metadata. Fields: `label`, `params`, `body` (`null`, string, or `{ "kind": "block", "children": [...] }`).
         - `blank` — a deliberate blank-line group, surfaced when round-trip fidelity matters.
 
@@ -81,8 +84,8 @@ Specification: Lex Extension Wire Format
           "id": 1,
           "method": "initialize",
           "params": {
-            "wire_version": 1,
-            "lex_version":  "0.10.2",
+            "wire_version": 2,
+            "lex_version":  "0.12.0",
             "namespace":    "acme",
             "labels":       ["acme.task", "acme.user", "acme.commenting"],
             "capabilities": { "fs": false, "net": false },
@@ -97,7 +100,7 @@ Specification: Lex Extension Wire Format
           "jsonrpc": "2.0",
           "id": 1,
           "result": {
-            "wire_version": 1,
+            "wire_version": 2,
             "implements":   ["on_validate", "on_render", "on_hover"]
           }
         }
@@ -246,29 +249,35 @@ Specification: Lex Extension Wire Format
 
     4.8 on_format (request)
 
-        Method: `on_format`. Params: `{ "label": string, "params": [[string, string]], "node": WireAst, "format_options": optional object }`. Result: `{ "annotation": LexAnnotation | null }`.
+        Method: `on_format`. Params: `FormatCtx`. Result: `{ "annotation": LexAnnotationOut | null }`.
 
-        Returns the Lex-source representation of a typed AST subtree owned by the handler's namespace. Fires during `lexd format`, `to_lex`, and any library-driven IR→Lex pass — the inverse of `on_resolve`, and the reverse-direction sibling of `on_render` for the Lex target format.
+        Returns the Lex-source representation of a typed AST subtree the handler's namespace owns. It is the inverse of [#4.3] `on_resolve`: given a typed `WireAst` node produced earlier in the pipeline, the handler describes the label, parameters, body, and form the host emits as Lex source. Fires when the host serializes a document back to `.lex` — `lexd format`, library-driven `to_lex` calls, and the reverse direction of round-trip conversion.
 
-        The handler receives the originating `label` and `params` (so a namespace with several labels driving the same node kind can route on the label string), the `WireAst` subtree (typically a single block node such as `verbatim`, `annotation`, or a structural node previously lifted by `on_resolve`), plus an optional `format_options` object whose shape is namespace-defined. The handler returns a `LexAnnotation` describing how to write the node back as Lex source. A `null` result lets the host fall back to its built-in formatter for the underlying node kind — there is no separate "not handled" error code; `null` is the single signal.
+        A `null` annotation lets the host fall back to its built-in formatter for the underlying node kind — there is no separate "not handled" error code.
 
-        LexAnnotation shape:
+        FormatCtx shape:
 
             {
               "label":          string,
-              "params":         [[string, string]],
-              "body":           string,
-              "verbatim_label": boolean
+              "params":         [[string, string], ...],
+              "node":           WireAst,
+              "format_options": optional object
             }
         :: json ::
 
-        `label` is the canonical fully-qualified label (`lex.tabular.table`, `acme.commenting`, …). `params` are emitted in `key=value` order, with quoting decisions left to the host. `body` is the verbatim or inline text body, empty for marker-form annotations. `verbatim_label` selects between the verbatim closing form (subject-line content + `:: label ::` closer) and the inline annotation form (`:: label :: text` or `:: label ::` followed by indented content).
+        `label` is the fully-qualified label of the schema that owns this format pass (e.g. `"lex.tabular.table"`). `params` carries the originating `(key, value)` pairs in the order the host deserialized them; quoting and escaping are the host's responsibility on emission. `node` is the typed wire subtree to serialize back, in the same shape `on_resolve` would have produced. `format_options` is namespace-defined and omitted from the wire payload when absent.
 
-        Use cases: a `lex.tabular.table` handler reads a typed `table` wire node and emits the pipe-table syntax under a `:: lex.tabular.table ::` verbatim. A `mit.plasma-specs` namespace converts its typed properties back to a parameter-encoded `:: mit.plasma-specs ::` annotation. Without this hook, structural transformations are one-way — the existing built-in `lex.tabular.*` and `lex.media.*` handlers in `lex-babel` provide bidirectional round-trip by hardcoded reverse pattern-matching on `DocNode` variants; `on_format` generalises that to third-party namespaces.
+        LexAnnotationOut shape:
 
-        Forward-compatibility note: the LexAnnotation shape is closed within `wire_version`. Future expansions for rich-body annotations (lists, sessions, tables as the body of an annotation) will land as an optional `body_ast: WireAst` field on the same shape — handlers may set either `body` (text) or `body_ast` (tree), not both. Until that lands, handlers emitting non-text bodies must serialize them into the text `body` themselves.
+            {
+              "label":          string,
+              "params":         optional [[string, string], ...],
+              "body":           optional string,
+              "verbatim_label": optional bool
+            }
+        :: json ::
 
-        Error handling: a handler that does not support a given node kind returns `"annotation": null` (the same fallback signal used for "I produced nothing here"); the host then defaults to its built-in formatter. Genuine handler failures (panics, internal errors during formatting) return a JSON-RPC error per §5 and fold into a single diagnostic at the node's range; the formatter continues with subsequent nodes.
+        `label` is the canonical fully-qualified label the host emits. `params` is the `(key, value)` sequence; omitted when empty (marker-form annotations collapse to `{ "label": "..." }`). `body` is the inline or verbatim body text; omitted when empty. `verbatim_label` selects the emission form: `true` produces the verbatim closing form (subject + indented body + `:: label ::` closer); `false` (the default, omitted from the wire when not set) produces the inline annotation form (`:: label :: text` or `:: label ::` plus indented content for block-shaped bodies).
 
 5. Errors
 
@@ -321,7 +330,17 @@ Specification: Lex Extension Wire Format
 
     The asymmetry between string-shaped enums (non-breaking, fall back to a documented default) and block-AST kinds (breaking, bump version) is deliberate. String values like severities are display metadata: an unknown severity surfaced as `info` is mildly imprecise but harmless. A node kind dropped silently loses content, and there is no safe fallback that preserves document meaning.
 
-    The `lex-extension` Rust crate's major version tracks `wire_version`. A handler built against `lex-extension` 1.x speaks `wire_version: 1`. The crate's minor and patch versions reflect non-breaking additions and bug fixes.
+    The `lex-extension` Rust crate's major version tracks `wire_version`. A handler built against `lex-extension` 2.x speaks `wire_version: 2`. The crate's minor and patch versions reflect non-breaking additions and bug fixes.
+
+    6.1 v1 → v2 (this revision)
+
+        Three changes ship together at `wire_version: 2`:
+
+        - *Breaking.* `table.align` (single string applied to every cell on the reverse codec) becomes `table.column_aligns` (array of string, one entry per column). Surfaced as a regression: a markdown pipe-table with mixed per-column alignment collapsed to its first non-`""` body alignment on round-trip through the wire.
+        - *Breaking.* Three new block kinds — `image`, `video`, `audio` — join the closed set. Before v2 these were serialized as `verbatim` with the same data flattened into `params`, leaving `on_resolve` handlers for the built-in `lex.media.*` family with no typed return shape that differed from their input.
+        - *Additive.* The `on_format` hook ([#4.8]) joins the method set. Pure addition under the "new methods" rule; documented here for symmetry with the breaking changes that landed in the same revision.
+
+        Hosts negotiating with a `wire_version: 1` handler at `initialize` must continue to speak v1 over the session — emitting a `table` node with `column_aligns` or any of the three new media kinds is a version-skew error and surfaces as a document-root diagnostic per [#2.2]'s closed-set rule.
 
 7. Examples
 
