@@ -152,7 +152,13 @@ Proposal: Extending Lex via Label Namespaces
 
         This is the integration point that turns Lex into a publishing platform. A `mit.plasma-specs` namespace can declare `render: [latex, html]` and have its content participate in any conversion pipeline that calls `lexd convert`. An importer can ship as a separate tool that produces `mit.plasma-specs` annotations from XMP or LaTeX input; the export side and the editor side need no awareness of where the annotation came from.
 
-    6.5 Interact
+    6.5 Format
+
+        Hooks with `format` are the reverse direction of `resolve` — given a typed AST subtree previously produced by a `resolve` hook, return its Lex-source representation. Fires during `lexd format`, `to_lex`, and any library-driven IR→Lex pass. The hook receives a wire AST node and returns a `LexAnnotation` describing the label, parameters, body, and verbatim flag the host needs to write the node back as source.
+
+        Without this hook, structural transformations are one-way. The built-in `lex.tabular.table` and `lex.media.*` handlers ship bidirectional round-trip via hardcoded reverse pattern-matching on `DocNode` variants; `format` generalises that to third-party namespaces. A `mit.plasma-specs` namespace that imports XMP input via `resolve` and renders LaTeX output via `render` can now also re-serialize the typed AST back to canonical `:: mit.plasma-specs ::` annotations — round-trip closure across the toolchain.
+
+    6.6 Interact
 
         LSP-only hooks: `hover`, `completion`, `code_action`. Fire in response to corresponding LSP requests, on labelled nodes. Surface as standard LSP responses to the editor.
 
