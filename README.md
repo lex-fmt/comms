@@ -1,6 +1,6 @@
 # Lex Comms
 
-Specs, documentation, and assets for [Lex](https://github.com/lex-fmt/lex) — a plain text format for structured documents.
+Specs, documentation, and assets for [Lex](https://github.com/lex-fmt/lex) — a plain-text format for structured documents.
 
 **[lex.ing](https://lex.ing)** — project site.
 
