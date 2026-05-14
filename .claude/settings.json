@@ -1,0 +1,14 @@
+{
+  "extraKnownMarketplaces": {
+    "arthur-debert": {
+      "source": {
+        "source": "github",
+        "repo": "arthur-debert/release",
+        "ref": "cloud"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "release@arthur-debert": true
+  }
+}
