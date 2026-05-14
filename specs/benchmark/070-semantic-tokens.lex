@@ -125,6 +125,6 @@ This document demonstrates all semantic token types emitted by lex-lsp and serve
     InlineMarker_*:
         The delimiter characters themselves (faint + italic)
 
-:: doc.note ::
+:: test.note ::
     This document is used for visual regression testing of syntax highlighting
     across VSCode and Neovim. The lex-light.json theme provides reference colors.

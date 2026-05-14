@@ -90,7 +90,7 @@ Useful Mental Models when Parsing Lex
         | Annotation | Optional    | DataMarkerLine      | Yes      | Yes      | dedent           |
         | List       | Optional*   | ListLine            | No       | Optional | dedent           |
         | Paragraph  | Optional    | Any Line            | -        | -        | BlankLine/Dedent |
-    :: doc.table ::
+    :: table ::
 
     *List preceding blank: blank lines before lists are optional. The parser uses look-ahead to detect list boundaries (2+ consecutive list-item-lines).
 
