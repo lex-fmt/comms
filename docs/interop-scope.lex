@@ -79,14 +79,14 @@ Babel v1 Interop Scope
 8. Quick reference
 
     The whole story in one table:
-        | Tier            | Format   | Export | Import |
-        | Core            | Markdown | yes    | yes    |
-        | Core            | HTML     | yes    | no     |
-        | Core            | PDF      | yes    | no     |
-        | Core            | PNG      | yes    | no     |
-        | Stretch         | HTML     | no     | yes    |
-        | Experimental    | RFC XML  | no     | yes    |
-        | Planned         | Pandoc   | no     | no     |
-        | Planned         | LaTeX    | no     | no     |
-        | Category error  | PDF      | no     | no     |
+        | Tier            | Format     | Export | Import |
+        | Core            | Markdown   | yes    | yes    |
+        | Core            | HTML       | yes    | no     |
+        | Core            | PDF        | yes    | no     |
+        | Core            | PNG        | yes    | no     |
+        | Stretch         | HTML       | no     | yes    |
+        | Experimental    | RFC XML    | no     | yes    |
+        | Planned         | Pandoc     | —      | —      |
+        | Planned         | LaTeX      | yes    | no     |
+        | Category error  | PDF import | no     | no     |
         :: table align=llcc ::
