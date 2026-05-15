@@ -16,10 +16,13 @@ Babel v1 Interop Scope
         Both export and import. Markdown is Lex's lingua franca — round-trip discipline is the bar, and is what we measure regressions against. The bulk of test fixtures and snapshot tests live here.
 
     HTML:
-        Export only. The publishing target for the web; the PDF exporter and editor previews consume the HTML output. There is no v1 HTML importer — see section 3.
+        Export only. The publishing target for the web; the PDF and PNG exporters and editor previews consume the HTML output. There is no v1 HTML importer — see section 3.
 
     PDF:
         Export only, via headless Chrome rendering of the HTML output. PDF import is a category error; see section 6.
+
+    PNG:
+        Export only, via a headless Chrome screenshot of the HTML output. Same pipeline as PDF; different output sink.
 
 3. Stretch (after core lands)
 
@@ -80,6 +83,7 @@ Babel v1 Interop Scope
         | Core            | Markdown | yes    | yes    |
         | Core            | HTML     | yes    | no     |
         | Core            | PDF      | yes    | no     |
+        | Core            | PNG      | yes    | no     |
         | Stretch         | HTML     | no     | yes    |
         | Experimental    | RFC XML  | no     | yes    |
         | Planned         | Pandoc   | no     | no     |
