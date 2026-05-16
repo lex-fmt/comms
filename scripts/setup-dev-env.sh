@@ -57,4 +57,45 @@ if [ -f lefthook.yml ] && command -v lefthook >/dev/null 2>&1; then
   fi
 fi
 
+# 3. comms-specific extras.
+# This repo's only buildable artifact is the Jekyll docs site under docs/,
+# which depends on (a) Ruby gems from docs/Gemfile and (b) the pinned lex
+# CLI from shared/lex-deps.json. The universal Gemfile check above only
+# looks at the repo root, so we wire docs/ explicitly here.
+
+# Bundler install for docs/. The cloud env's rbenv layout puts gem
+# executables at /opt/rbenv/versions/<v>/bin/, but `bundle exec` looks
+# under <gem-install-dir>/bin/ (which doesn't exist), so `bundle exec
+# jekyll` fails to find the binary. Generating local binstubs in docs/bin/
+# sidesteps this — callers run `./bin/jekyll …` from docs/.
+if [ -f docs/Gemfile ] && command -v bundle >/dev/null 2>&1; then
+  (
+    cd docs
+    bundle install --quiet || true
+    bundle config set --local bin bin >/dev/null 2>&1 || true
+    bundle binstubs --all --force >/dev/null 2>&1 || true
+  )
+fi
+
+# lex CLI — version + repo pinned in shared/lex-deps.json. Downloaded
+# tarball goes under /tmp (per-session, fine for cloud); the binary is
+# symlinked to /usr/local/bin/lex so docs/build (and ad-hoc invocations)
+# find it without env tweaks. Skipped silently if already present.
+if [ -f shared/lex-deps.json ] && command -v jq >/dev/null 2>&1 && command -v curl >/dev/null 2>&1; then
+  if ! command -v lex >/dev/null 2>&1; then
+    LEX_VERSION="$(jq -r '."lex-cli"' shared/lex-deps.json)"
+    LEX_REPO="$(jq -r '."lex-cli-repo"' shared/lex-deps.json)"
+    LEX_DIR="/tmp/lex-cli"
+    LEX_URL="https://github.com/${LEX_REPO}/releases/download/${LEX_VERSION}/lex-x86_64-unknown-linux-gnu.tar.gz"
+    mkdir -p "${LEX_DIR}"
+    if curl -fsSL -o "${LEX_DIR}/lex.tgz" "${LEX_URL}" \
+        && tar -xzf "${LEX_DIR}/lex.tgz" -C "${LEX_DIR}" \
+        && chmod +x "${LEX_DIR}/lex"; then
+      ln -sf "${LEX_DIR}/lex" /usr/local/bin/lex 2>/dev/null || true
+    else
+      echo "warning: lex CLI download failed (${LEX_URL})" >&2
+    fi
+  fi
+fi
+
 exit 0
