@@ -71,30 +71,35 @@ fi
 if [ -f docs/Gemfile ] && command -v bundle >/dev/null 2>&1; then
   (
     cd docs
-    bundle install --quiet || true
-    bundle config set --local bin bin >/dev/null 2>&1 || true
-    bundle binstubs --all --force >/dev/null 2>&1 || true
+    bundle install --quiet || echo "warning: bundle install failed in docs/" >&2
+    bundle config set --local bin bin >/dev/null 2>&1
+    bundle binstubs --all --force >/dev/null 2>&1
   )
 fi
 
 # lex CLI — version + repo pinned in shared/lex-deps.json. Downloaded
 # tarball goes under /tmp (per-session, fine for cloud); the binary is
 # symlinked to /usr/local/bin/lex so docs/build (and ad-hoc invocations)
-# find it without env tweaks. Skipped silently if already present.
+# find it without env tweaks. Always re-installs (no `command -v lex`
+# short-circuit) so a bump to the pinned version in lex-deps.json takes
+# effect on session resume, not just on fresh containers.
 if [ -f shared/lex-deps.json ] && command -v jq >/dev/null 2>&1 && command -v curl >/dev/null 2>&1; then
-  if ! command -v lex >/dev/null 2>&1; then
-    LEX_VERSION="$(jq -r '."lex-cli"' shared/lex-deps.json)"
-    LEX_REPO="$(jq -r '."lex-cli-repo"' shared/lex-deps.json)"
-    LEX_DIR="/tmp/lex-cli"
-    LEX_URL="https://github.com/${LEX_REPO}/releases/download/${LEX_VERSION}/lex-x86_64-unknown-linux-gnu.tar.gz"
-    mkdir -p "${LEX_DIR}"
-    if curl -fsSL -o "${LEX_DIR}/lex.tgz" "${LEX_URL}" \
-        && tar -xzf "${LEX_DIR}/lex.tgz" -C "${LEX_DIR}" \
-        && chmod +x "${LEX_DIR}/lex"; then
-      ln -sf "${LEX_DIR}/lex" /usr/local/bin/lex 2>/dev/null || true
-    else
-      echo "warning: lex CLI download failed (${LEX_URL})" >&2
+  LEX_VERSION="$(jq -r '."lex-cli"' shared/lex-deps.json)"
+  LEX_REPO="$(jq -r '."lex-cli-repo"' shared/lex-deps.json)"
+  LEX_DIR="/tmp/lex-cli"
+  # uname normalisation: macOS reports arm64, the release tarballs use
+  # aarch64. Script is cloud-only Linux so darwin URLs aren't needed.
+  LEX_ARCH="$(uname -m | sed 's/arm64/aarch64/')"
+  LEX_URL="https://github.com/${LEX_REPO}/releases/download/${LEX_VERSION}/lex-${LEX_ARCH}-unknown-linux-gnu.tar.gz"
+  mkdir -p "${LEX_DIR}"
+  if curl -fsSL -o "${LEX_DIR}/lex.tgz" "${LEX_URL}" \
+      && tar -xzf "${LEX_DIR}/lex.tgz" -C "${LEX_DIR}" \
+      && chmod +x "${LEX_DIR}/lex"; then
+    if ! ln -sf "${LEX_DIR}/lex" /usr/local/bin/lex 2>/dev/null; then
+      echo "warning: could not symlink lex to /usr/local/bin (permission denied?) — invoke directly via ${LEX_DIR}/lex" >&2
     fi
+  else
+    echo "warning: lex CLI download failed (${LEX_URL})" >&2
   fi
 fi
 
