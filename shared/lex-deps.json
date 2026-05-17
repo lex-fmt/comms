@@ -1,4 +1,4 @@
 {
-  "lex-cli": "lex-cli-v0.2.6",
-  "lex-cli-repo": "lex-fmt/tools"
+  "lexd": "v0.14.0",
+  "lexd-repo": "lex-fmt/lex"
 }

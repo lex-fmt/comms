@@ -1,8 +1,3 @@
----
-layout: default
-title: Specifications
----
-
 # lex Specifications
 
 This is the formal reference for the lex document format.

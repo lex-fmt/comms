@@ -1,0 +1,71 @@
+site_name: lex
+site_description: A plain text document format designed for the complete lifecycle of an idea
+site_url: https://lex.ing
+repo_url: https://github.com/lex-fmt/comms
+repo_name: lex-fmt/comms
+
+docs_dir: docs
+
+theme:
+  name: material
+  font:
+    text: Source Sans 3
+    code: JetBrains Mono
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: black
+      accent: blue
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: black
+      accent: blue
+      toggle:
+        icon: material/weather-night
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.top
+    - content.code.copy
+    - search.suggest
+    - search.highlight
+    - toc.follow
+
+plugins:
+  - search
+  - lex
+
+extra_css:
+  - css/variables.css
+  - css/site.css
+  - css/lex-content.css
+
+markdown_extensions:
+  - admonition
+  - footnotes
+  - tables
+  - attr_list
+  - md_in_html
+  - toc:
+      permalink: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - pymdownx.inlinehilite
+  - pymdownx.details
+
+nav:
+  - Home: index.md
+  - Why: why.md
+  - About: about.md
+  - Specs: specs/index.md
+  - Editors: editors.md
+  - Tools: tools.md
+  - Dummy Session: dummy-session.md
+  - Font Ligatures: font-ligatures-symbols.md
+  - Contributing: contributing.md

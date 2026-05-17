@@ -1,8 +1,3 @@
----
-layout: default
-title: Editors
----
-
 # Editor Support
 
 lex has first-class editor support through the `lex-lsp` language server. All editors share the same language intelligence backend.

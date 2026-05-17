@@ -2,7 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [main]
+    branches: [main, feat/mkdocs-conversion]
   workflow_dispatch:
 
 permissions:
@@ -21,46 +21,49 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Setup Ruby
-        uses: ruby/setup-ruby@v1
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
-          ruby-version: '3.2'
-          bundler-cache: true
-          working-directory: docs
+          python-version: "3.11"
+          cache: pip
 
-      - name: Download lex CLI
+      - name: Install MkDocs and plugins
         run: |
-          # Read pinned version from shared/lex-deps.json
-          LEX_VERSION=$(jq -r '.["lex-cli"]' shared/lex-deps.json)
-          LEX_REPO=$(jq -r '.["lex-cli-repo"]' shared/lex-deps.json)
-          LEX_ARCHIVE="lex-x86_64-unknown-linux-gnu.tar.gz"
-          echo "Using lex-cli version: $LEX_VERSION from $LEX_REPO"
+          python -m pip install --upgrade pip
+          pip install mkdocs mkdocs-material mkdocs-lex-plugin
 
-          mkdir -p "$RUNNER_TEMP/lex-cli"
-          curl -sSL "https://github.com/${LEX_REPO}/releases/download/${LEX_VERSION}/${LEX_ARCHIVE}" -o "$RUNNER_TEMP/lex-cli/lex.tgz"
-          tar -xzf "$RUNNER_TEMP/lex-cli/lex.tgz" -C "$RUNNER_TEMP/lex-cli"
-          chmod +x "$RUNNER_TEMP/lex-cli/lex"
-
-      - name: Generate Lex HTML
-        working-directory: docs
+      - name: Install pinned lexd binary
         env:
-          LEX_BIN: ${{ runner.temp }}/lex-cli/lex
-        run: ./build
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          LEXD_VERSION=$(jq -r '.lexd' shared/lex-deps.json)
+          LEXD_REPO=$(jq -r '."lexd-repo"' shared/lex-deps.json)
+          LEXD_TARGET="x86_64-unknown-linux-gnu"
+          LEXD_TMP="$(mktemp -d)"
+          gh release download "${LEXD_VERSION}" \
+            --repo "${LEXD_REPO}" \
+            --pattern "lexd-${LEXD_TARGET}.tar.gz" \
+            --dir "${LEXD_TMP}"
+          tar -xzf "${LEXD_TMP}/lexd-${LEXD_TARGET}.tar.gz" -C "${LEXD_TMP}"
+          mkdir -p "${HOME}/.local/bin"
+          mv "$(find "${LEXD_TMP}" -type f -name lexd | head -n 1)" "${HOME}/.local/bin/lexd"
+          chmod +x "${HOME}/.local/bin/lexd"
+          echo "${HOME}/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Verify lexd
+        run: lexd --version
 
       - name: Setup Pages
         uses: actions/configure-pages@v6
 
-      - name: Build with Jekyll
-        run: |
-          cd docs
-          bundle exec jekyll build --destination ../_site
-        env:
-          JEKYLL_ENV: production
+      - name: Build with MkDocs
+        run: mkdocs build --strict
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v5
         with:
-          path: _site
+          path: site
 
   deploy:
     environment:
