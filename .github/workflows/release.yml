@@ -44,3 +44,27 @@ jobs:
           body: ${{ steps.notes.outputs.body }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Layer 2 of the cross-repo release automation (lex-fmt/lex#640).
+      # Notify direct consumers that a new comms release is out so they
+      # can run their own on-upstream-released handler. comms's direct
+      # consumers are lex + tree-sitter-lex (they submodule comms). The
+      # editors (vscode/nvim/lexed) also submodule comms but listen for
+      # events from lex + tree-sitter releasing — that two-hop cascade
+      # avoids the editors racing on a comms release before lex /
+      # tree-sitter have caught up.
+      - name: Notify downstreams
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          VERSION: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          for repo in lex-fmt/lex lex-fmt/tree-sitter-lex; do
+            echo "Notifying $repo of comms@$VERSION"
+            gh api "repos/$repo/dispatches" --method POST \
+              -f event_type=upstream-released \
+              -F "client_payload[source]=comms" \
+              -F "client_payload[version]=$VERSION" \
+              -F "client_payload[ts]=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+              -F "client_payload[run_url]=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          done
