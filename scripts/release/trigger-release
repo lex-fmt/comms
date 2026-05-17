@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+# trigger-release <new-version>
+# ----------------------------
+# Layer 0 release-trigger primitive (lex-fmt/lex#640).
+#
+# Fires this repo's release CI. For comms, the strategy is tag-push:
+# create the `vX.Y.Z` tag on the current commit and push it. CI is
+# wired to `on: push: tags: ['v*']` (see .github/workflows/release.yml).
+#
+# Called by the cross-repo orchestrator (arthur-debert/release/bin/release-lex)
+# AFTER the version-bump PR has been admin-merged and main is pulled.
+# Each repo owns its trigger strategy in this script so the orchestrator
+# can stay uniform across the chain (tag-push vs workflow_dispatch
+# vs anything future).
+#
+# Argument:
+#   <new-version>   Bare semver (e.g. "0.16.2"). Do not include "v".
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+cd "$REPO_ROOT"
+
+usage() {
+  echo "Usage: $(basename "$0") <new-version>" >&2
+  echo "  new-version   Bare semver string, e.g. 0.16.2 (no leading v)" >&2
+}
+
+if [[ $# -ne 1 ]]; then
+  usage
+  exit 2
+fi
+
+NEW_VERSION="$1"
+if [[ ! "$NEW_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+  echo "error: version must be X.Y.Z (got: $NEW_VERSION)" >&2
+  exit 2
+fi
+
+TAG="v$NEW_VERSION"
+
+# Refuse to create a tag that already exists. If a previous run left
+# the tag behind, the caller can `git tag -d $TAG && git push --delete
+# origin $TAG` or re-use the existing one explicitly — we don't guess.
+if git rev-parse "$TAG" >/dev/null 2>&1; then
+  echo "error: tag $TAG already exists locally — delete it or pick a new version" >&2
+  exit 1
+fi
+
+# Extract release notes for $NEW_VERSION from CHANGELOG.md (everything
+# between this version's `## [X.Y.Z]` header and the next `## ` header).
+# The release workflow reads the tag annotation via `git tag -l
+# --format='%(contents)'` and uses it verbatim as the GitHub release body,
+# so the tag MUST be annotated (-a). If no section is found we fall back
+# to a bare "Release $TAG" message rather than failing — the orchestrator
+# may have its own reasons for tagging without a changelog entry, and a
+# release with a thin body beats no release at all.
+CHANGELOG="$REPO_ROOT/CHANGELOG.md"
+NOTES=""
+if [[ -f "$CHANGELOG" ]]; then
+  NOTES=$(awk -v ver="$NEW_VERSION" '
+    $0 ~ "^## \\[" ver "\\]" { in_section = 1; next }
+    in_section && /^## / { exit }
+    in_section { print }
+  ' "$CHANGELOG")
+fi
+if [[ -z "${NOTES//[[:space:]]/}" ]]; then
+  NOTES="Release $TAG"
+fi
+
+echo "Tagging $TAG on $(git rev-parse --short HEAD)..."
+git tag -a "$TAG" -m "$NOTES"
+
+echo "Pushing $TAG to origin..."
+git push origin "$TAG"
+
+echo "Done. CI should pick it up shortly: $(gh repo view --json url --jq .url 2>/dev/null || echo 'check the repo')/actions"
