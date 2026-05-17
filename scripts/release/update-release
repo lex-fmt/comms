@@ -1,0 +1,103 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# update-release <new-version>
+# ----------------------------
+# Layer 0 release primitive (see lex-fmt/lex#640).
+#
+# Applies a new version to this repo and `git add`s every touched file.
+# The caller is responsible for committing — this script never commits
+# and never pushes, so the orchestrator stays in control of the actual
+# git transaction.
+#
+# Argument:
+#   <new-version>   Bare semver (e.g. "0.17.0"). Do not include a "v"
+#                   prefix; the tag is added later by the caller.
+#
+# What this script does in `comms`:
+#   - There is NO manifest version file to bump (version source is git
+#     tags). So there's nothing to rewrite for a version bump.
+#   - There are NO upstream dependency pins to refresh (comms is the
+#     root of the cross-repo dependency chain — everyone else pins it,
+#     it pins no one).
+#   - The CHANGELOG.md dance: rename `## [Unreleased]` to
+#     `## [<new-version>] - <YYYY-MM-DD>`, then insert a fresh empty
+#     `## [Unreleased]` section above it so subsequent commits have a
+#     home for release notes.
+#   - `git add CHANGELOG.md` so the caller's commit picks it up.
+#
+# If `## [Unreleased]` is not found in CHANGELOG.md, this is a setup
+# error — the caller (or a human) is expected to fix CHANGELOG before
+# the next release. We fail loudly rather than silently producing an
+# incomplete release.
+
+usage() {
+  echo "Usage: $(basename "$0") <new-version>" >&2
+  echo "" >&2
+  echo "  new-version   Bare semver string, e.g. 0.17.0 (no leading v)" >&2
+}
+
+if [[ $# -ne 1 ]]; then
+  usage
+  exit 1
+fi
+
+NEW_VERSION="$1"
+
+# Sanity-check the version shape. We accept plain X.Y.Z. Prerelease /
+# build-metadata semver suffixes are intentionally rejected — the
+# release cascade only handles plain releases today.
+if [[ ! "$NEW_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+  echo "error: version must match X.Y.Z (got: $NEW_VERSION)" >&2
+  exit 1
+fi
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+cd "$REPO_ROOT"
+
+CHANGELOG="$REPO_ROOT/CHANGELOG.md"
+if [[ ! -f "$CHANGELOG" ]]; then
+  echo "error: CHANGELOG.md not found at $CHANGELOG" >&2
+  exit 1
+fi
+
+# Guard: the [Unreleased] section must be present. If it isn't, refuse
+# rather than silently producing an empty release entry.
+if ! grep -qE '^## \[Unreleased\]' "$CHANGELOG"; then
+  echo "error: '## [Unreleased]' section not found in CHANGELOG.md" >&2
+  echo "  Add an '## [Unreleased]' section at the top before running." >&2
+  exit 1
+fi
+
+TODAY="$(date +%Y-%m-%d)"
+
+# Use a temp file + atomic rename for the rewrite. We do two edits in
+# one awk pass:
+#   1. The FIRST `## [Unreleased]` line is replaced by two lines:
+#      a fresh empty `## [Unreleased]` section, a blank line, then the
+#      dated `## [<new-version>] - <date>` header.
+#   2. All later occurrences (there shouldn't be any, but be safe) are
+#      left alone.
+TMP="$(mktemp)"
+trap 'rm -f "$TMP"' EXIT
+
+awk -v ver="$NEW_VERSION" -v today="$TODAY" '
+  BEGIN { done = 0 }
+  /^## \[Unreleased\]/ && !done {
+    print "## [Unreleased]"
+    print ""
+    print "## [" ver "] - " today
+    done = 1
+    next
+  }
+  { print }
+' "$CHANGELOG" > "$TMP"
+
+mv "$TMP" "$CHANGELOG"
+trap - EXIT
+
+# Stage the touched file. The caller will commit.
+git add CHANGELOG.md
+
+echo "Updated CHANGELOG.md: [Unreleased] -> [$NEW_VERSION] - $TODAY"

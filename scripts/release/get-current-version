@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# get-current-version
+# --------------------
+# Layer 0 release primitive (see lex-fmt/lex#640).
+#
+# Prints this repo's current version to stdout, bare (no leading "v"),
+# followed by a newline. Exits 0 on success.
+#
+# Version source for the `comms` repo: git tags only. There is no version
+# file in this repository — the canonical version is whatever the most
+# recent `vX.Y.Z` tag says. If no such tag exists yet (fresh repo), we
+# fall back to `0.0.0` so callers always get a parseable semver string.
+#
+# Why `--match='v*.*.*'`: this avoids picking up other tag schemes that
+# might appear in the repo (e.g. spec freeze tags, prerelease markers).
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+cd "$REPO_ROOT"
+
+# `git describe --tags --abbrev=0` returns the most recent tag reachable
+# from HEAD (no commit-distance suffix). `--match` filters to vX.Y.Z.
+# If the command fails (no matching tag), fall back to 0.0.0.
+if tag=$(git describe --tags --abbrev=0 --match='v*.*.*' 2>/dev/null); then
+  # Strip the leading "v" — callers want a bare semver string.
+  echo "${tag#v}"
+else
+  echo "0.0.0"
+fi
