@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# should-release
+# --------------
+# Layer 0 release primitive — see lex-fmt/lex#640.
+#
+# Decides whether this repo needs to release now. Composes the other
+# primitives' answers + dep-staleness checks; the orchestrator (or, in
+# future, a repository_dispatch handler workflow) calls this once to
+# decide whether to invoke the rest of the chain.
+#
+# comms has no upstream deps, so the only check is whether there are
+# any commits since the latest release tag. Repos with deps will layer
+# additional staleness checks on top of this same shape.
+#
+# Output is a single line of explanation; exit code carries the
+# decision:
+#   0  — yes, release needed
+#   1  — no, skip
+#   2+ — error
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+cd "$REPO_ROOT"
+
+# Reuse the sibling primitive instead of re-implementing the
+# tag-walking logic. `|| true` so a non-zero from git inside the
+# sibling doesn't kill us under `set -e`; the sibling already
+# normalizes the no-tag case to "print all commits".
+commits=$("$SCRIPT_DIR/get-commits-since-release" || true)
+
+if [ -n "$commits" ]; then
+  # grep -c . counts non-empty lines, which matches the
+  # one-commit-per-line format emitted by the sibling.
+  count=$(printf '%s\n' "$commits" | grep -c .)
+  echo "yes: $count commit(s) since latest release"
+  exit 0
+fi
+
+echo "no: nothing to release since latest tag"
+exit 1
