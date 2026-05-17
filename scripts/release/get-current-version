@@ -20,10 +20,17 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 cd "$REPO_ROOT"
 
-# `git describe --tags --abbrev=0` returns the most recent tag reachable
-# from HEAD (no commit-distance suffix). `--match` filters to vX.Y.Z.
-# If the command fails (no matching tag), fall back to 0.0.0.
-if tag=$(git describe --tags --abbrev=0 --match='v*.*.*' 2>/dev/null); then
+# Pick the highest vX.Y.Z tag in the repo by semver order. We use
+# `git tag --list --sort=-v:refname` (rather than `git describe`) because
+# `git describe` only sees tags reachable from HEAD — so a higher-versioned
+# tag living on another branch would be silently ignored, and the release
+# orchestrator would compute the wrong next version. Listing all tags and
+# sorting by version refname avoids that footgun.
+#
+# If no matching tag exists yet (fresh repo), fall back to 0.0.0 so
+# callers always get a parseable semver string.
+tag="$(git tag --list 'v*.*.*' --sort=-v:refname | head -n1)"
+if [[ -n "$tag" ]]; then
   # Strip the leading "v" — callers want a bare semver string.
   echo "${tag#v}"
 else

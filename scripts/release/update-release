@@ -63,8 +63,10 @@ if [[ ! -f "$CHANGELOG" ]]; then
 fi
 
 # Guard: the [Unreleased] section must be present. If it isn't, refuse
-# rather than silently producing an empty release entry.
-if ! grep -qE '^## \[Unreleased\]' "$CHANGELOG"; then
+# rather than silently producing an empty release entry. Anchor with `$`
+# so we don't match a previously-dated `## [Unreleased] - <date>` header
+# (which would be a CHANGELOG bug, but we shouldn't silently accept it).
+if ! grep -qE '^## \[Unreleased\][[:space:]]*$' "$CHANGELOG"; then
   echo "error: '## [Unreleased]' section not found in CHANGELOG.md" >&2
   echo "  Add an '## [Unreleased]' section at the top before running." >&2
   exit 1
@@ -79,12 +81,15 @@ TODAY="$(date +%Y-%m-%d)"
 #      dated `## [<new-version>] - <date>` header.
 #   2. All later occurrences (there shouldn't be any, but be safe) are
 #      left alone.
-TMP="$(mktemp)"
+# Keep the temp file in the repo root (same filesystem as CHANGELOG.md)
+# so the atomic `mv` below can't fail with EXDEV ("cross-device link")
+# when $TMPDIR lives on a separate filesystem from the repo.
+TMP="$(mktemp ./CHANGELOG.tmp.XXXXXX)"
 trap 'rm -f "$TMP"' EXIT
 
 awk -v ver="$NEW_VERSION" -v today="$TODAY" '
   BEGIN { done = 0 }
-  /^## \[Unreleased\]/ && !done {
+  /^## \[Unreleased\][[:space:]]*$/ && !done {
     print "## [Unreleased]"
     print ""
     print "## [" ver "] - " today
