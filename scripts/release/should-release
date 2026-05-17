@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+# should-release
+# --------------
+# Layer 0 release primitive — see lex-fmt/lex#640.
+#
+# Decides whether this repo needs to release now. Composes the other
+# primitives' answers + dep-staleness checks; the orchestrator (or, in
+# future, a repository_dispatch handler workflow) calls this once to
+# decide whether to invoke the rest of the chain.
+#
+# comms has no upstream deps, so the only check is whether there are
+# any commits since the latest release tag. Repos with deps will layer
+# additional staleness checks on top of this same shape.
+#
+# Output is a single line of explanation; exit code carries the
+# decision:
+#   0  — yes, release needed
+#   1  — no, skip
+#   2+ — error
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+cd "$REPO_ROOT"
+
+# Reuse the sibling primitive instead of re-implementing the
+# tag-walking logic. The sibling exits 0 in both the "new commits"
+# and "no commits since tag" cases (the no-commit case just prints
+# nothing), so a non-zero status means a real git/environment
+# failure — surface it as the documented `2+ — error` exit.
+#
+# We can't pipe straight into a command-substitution under set -e
+# without losing the exit status, so capture it explicitly.
+set +e
+commits=$("$SCRIPT_DIR/get-commits-since-release")
+sibling_status=$?
+set -e
+if [ "$sibling_status" -ne 0 ]; then
+  echo "error: get-commits-since-release exited $sibling_status" >&2
+  exit 2
+fi
+
+if [ -n "$commits" ]; then
+  # grep -c . counts non-empty lines, which matches the
+  # one-commit-per-line format emitted by the sibling.
+  count=$(printf '%s\n' "$commits" | grep -c .)
+  echo "yes: $count commit(s) since latest release"
+  exit 0
+fi
+
+echo "no: nothing to release since latest tag"
+exit 1
