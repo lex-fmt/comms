@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# get-commits-since-release
+# --------------------------
+# Layer 0 release primitive (see lex-fmt/lex#640).
+#
+# Prints commits made since the most recent `vX.Y.Z` tag, one per line,
+# in the format `<short-sha> <subject>`. If there are no commits since
+# the last release tag (or no release tag exists), prints nothing.
+# Exits 0 on success (only fails on git errors).
+#
+# This is what the Layer 1 orchestrator uses to decide whether a repo
+# needs releasing at all, and to populate prompts/summaries for the
+# human driving the cascade.
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+cd "$REPO_ROOT"
+
+# Find the most recent vX.Y.Z tag. If none exists, list all commits in
+# the repo (fresh repo with no releases yet).
+if tag=$(git describe --tags --abbrev=0 --match='v*.*.*' 2>/dev/null); then
+  range="${tag}..HEAD"
+else
+  range="HEAD"
+fi
+
+# --no-pager: avoid `less` if invoked in an interactive terminal.
+# --format='%h %s': short sha, space, subject line. One commit per line.
+# If the range is empty (HEAD is at the tag), git prints nothing.
+git --no-pager log --format='%h %s' "$range"
