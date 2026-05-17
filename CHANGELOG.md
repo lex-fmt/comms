@@ -1,6 +1,8 @@
 # Changelog
 
-## v0.16.1 (2026-05-07)
+## [Unreleased]
+
+## [0.16.1] - 2026-05-07
 
 ### Changed
 
@@ -15,7 +17,7 @@
   theme files are regenerated from this canonical source via each
   editor's `scripts/gen-theme.py`.
 
-## v0.16.0 (2026-05-04)
+## [0.16.0] - 2026-05-04
 
 ### Added
 
@@ -28,7 +30,7 @@
 - Includes proposal moved from `specs/proposals/includes.lex` to `specs/proposals/done/includes.lex` and prepended with a `:: status ::` annotation marking it as implemented and frozen — kept to preserve design rationale, but not the canonical documentation for the working code (which lives in `specs/elements/lex.include.lex`). This establishes the convention: implemented proposals move to `done/` rather than getting deleted.
 - Includes proposal (`specs/proposals/done/includes.lex`) revised earlier in this cycle: splice into the parent container at the include site instead of into the include annotation's children slot (which conflicted with the `GeneralContainer` typed-content policy when the included file contained Sessions); resolver in `lex-core` with an injected `Loader`; included file's doc title and document-level annotations converted to a `Paragraph` and regular annotations rather than dropped (matching what a textual paste with indent-shift would produce); container-policy validation at splice time; root discovery via nearest `.lex.toml`. Implementation landed across `feat/includes/*` PRs in the lex repo over 10 PRs (release model B: batched foundation, then user-visible release, then LSP follow-ups).
 
-## v0.15.0 (2026-05-02)
+## [0.15.0] - 2026-05-02
 
 ### Added
 
@@ -38,13 +40,13 @@
 
 - Repo onboarded to the canonical lex-fmt CI standardization: added `.github/CODEOWNERS` and `.github/workflows/copilot-review.yml` to auto-trigger Copilot review on PRs. (#23)
 
-## v0.14.1 (2026-04-25)
+## [0.14.1] - 2026-04-25
 
 ### Fixed
 
 - `EDITORS.lex` footnote [4]: corrected the lex-lsp version that ships the "Add missing footnote definition" quickfix from v0.8.6 to v0.8.8 (lex-fmt/lex#463 merged after v0.8.6/v0.8.7 had already shipped).
 
-## v0.14.0 (2026-04-24)
+## [0.14.0] - 2026-04-24
 
 ### Breaking
 
