@@ -336,7 +336,7 @@ Specification: Lex Extension Stores
 
         S3-presigned URL, time-bounded:
 
-            [labels.draft]
+            [labels.snapshot]
             url = "https://my-bucket.s3.amazonaws.com/lex-labels-snapshot.tar.gz?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Signature=..."
         :: toml ::
 
