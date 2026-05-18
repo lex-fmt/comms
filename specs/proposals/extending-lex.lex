@@ -88,9 +88,9 @@ Proposal: Extending Lex via Label Namespaces
 
     4.2 URI Forms
 
-        Tap shorthand is sugar over a URI scheme. Any of the URI forms shown in *Example A* ([#13.1]) is legal as the value of a `[labels]` entry: `github:`, `gitlab:`, `https:`, `path:`, `git+ssh:`. Resolvers are pluggable, so additional schemes can be added without touching the document surface.
+        Tap shorthand is sugar over an underlying store; the full mechanism is specified in the companion document, *Specification: Lex Extension Stores* ([./extending-lex-stores.lex]). The store layer decomposes into three real transports (filesystem, https tarball, git clone) and a URL-template layer for forge-shorthands (`github:`, `gitlab:`). Authors expressing a namespace in `lex.toml` pick by primary field — `tap`, `path`, `url`, `git`, `github`, `gitlab` — and the resolver dispatches accordingly.
 
-        This decoupling means GitHub is the default but never privileged. Internal corporate setups, self-hosted Git, or local development directories all work.
+        This decoupling means GitHub is the default but never privileged. Internal corporate setups, self-hosted Git, presigned-URL artifact stores, or local development directories all work.
 
     4.3 The lex.* Namespace
 
