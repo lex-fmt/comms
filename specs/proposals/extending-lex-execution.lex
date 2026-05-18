@@ -77,7 +77,7 @@ Proposal: Extending Lex — Handler Distribution and Execution
 
     3.1 The Tap Convention Already Exists
 
-        The parent proposal grounds namespace ownership in `user/repo` taps resolving to GitHub repositories ([./extending-lex.lex#4.1]). A schema for `acme.commenting` already lives in `github.com/acme/lex-labels`. Putting the *handler binaries* in the GitHub Releases of that same repository is a zero-new-concepts extension. One organisation, one repository, one place a `lex.toml` entry points at, both for the schema and for the executable code.
+        The parent proposal grounds namespace ownership in `user/repo` taps resolving to GitHub repositories ([./extending-lex.lex] §4.1). A schema for `acme.commenting` already lives in `github.com/acme/lex-labels`. Putting the *handler binaries* in the GitHub Releases of that same repository is a zero-new-concepts extension. One organisation, one repository, one place a `lex.toml` entry points at, both for the schema and for the executable code.
 
         Authors who already understand the schema-publishing flow learn nothing new to publish a handler. Users who already trust `acme = { tap = "acme" }` for schemas are not asked to trust a second source for binaries.
 
@@ -93,7 +93,7 @@ Proposal: Extending Lex — Handler Distribution and Execution
 
     3.4 The Sandbox Is Already There
 
-        The parent proposal's trust matrix ([./extending-lex.lex#8]) already names OS-level sandboxing as the enforcement mechanism for declared capabilities. That mechanism applies to *any* subprocess handler regardless of how the binary arrived. Adding a distribution layer does not require a new sandboxing story; it slots into the existing one. A handler downloaded from a GitHub Release runs under the same `LinuxSandbox` / `MacosSandbox` / null-on-Windows enforcement as a handler the user dropped into `~/bin` by hand.
+        The parent proposal's trust matrix ([./extending-lex.lex] §8) already names OS-level sandboxing as the enforcement mechanism for declared capabilities. That mechanism applies to *any* subprocess handler regardless of how the binary arrived. Adding a distribution layer does not require a new sandboxing story; it slots into the existing one. A handler downloaded from a GitHub Release runs under the same `LinuxSandbox` / `MacosSandbox` / null-on-Windows enforcement as a handler the user dropped into `~/bin` by hand.
 
         Crucially, the distribution layer does not earn any extra trust by virtue of being structured. A signed-and-pinned binary fetched from a `lex.toml`-declared tap is still a *subprocess handler with declared capabilities*, and its capability declaration is what governs what it can do. The trust model already separates "is this code I want to run at all" (a prompt-and-pin question) from "what is this code allowed to touch when it runs" (a sandbox question). The distribution mechanism is orthogonal to both.
 
@@ -107,6 +107,8 @@ Proposal: Extending Lex — Handler Distribution and Execution
 
         Everything that follows is a consequence of this property. The `[release]` block in [#4] lives in the schema because the schema is the plugin. The single-purpose tap repository pattern in [#5] is natural because all an author publishes is YAML files and a CI workflow that uploads what the YAML names. The runtime-tier addendum in [#8] keeps the property: a node-flavoured extension is still one YAML file pointing at a source archive plus a lockfile name, not a YAML plus a separate package descriptor.
 
+        The single-file property has one notable cost: a namespace with many labels sharing one multi-call handler binary duplicates the `[release]` block across every schema, and a version bump touches every file. We accept this for v1. The duplicated content is small (a tag, an asset pattern, a handful of digests), mechanical, and trivially codegen-able from one source of truth in the author's repo. A future revision can introduce namespace-level defaults — a `release.yaml` at the tap root whose fields apply unless overridden per schema — additively, without changing the per-schema surface or breaking v1 schemas. Inheritance is sugar over the property, not a replacement for it.
+
 4. The Provider Surface
 
     A schema gains an optional `[release]` block alongside the existing `[handler]` block. The two compose: `[handler]` says *what* runs and how the host talks to it; `[release]` says *where the bits come from* and how to locate them on disk.
@@ -117,14 +119,14 @@ Proposal: Extending Lex — Handler Distribution and Execution
 
             handler:
               transport: subprocess
-              command: ["${ext_dir}/bin/acme-commenting"]
+              command: ["${ext_dir}/acme-commenting"]
               timeout_ms: 2000
 
             release:
               provider: gh
               repo: acme/lex-labels
               version: v1.4.0
-              asset_pattern: "acme-commenting-${os}-${arch}${exe_suffix}"
+              asset_pattern: "acme-commenting-${version}-${os}-${arch}${exe_suffix}"
               sha256:
                 darwin-arm64: "abc123..."
                 darwin-amd64: "def456..."
@@ -137,9 +139,11 @@ Proposal: Extending Lex — Handler Distribution and Execution
 
         - `provider` — the resolver scheme. `gh` is the v1 provider and the only one specified here. Future providers (`gitlab`, `https`, `path`) follow the same pluggable resolver shape the parent proposal already uses for schema URIs.
         - `repo` — the `owner/name` pair. Defaults to the namespace's schema-source repo when omitted (the common case: one repo holds schemas and binaries together).
-        - `version` — the release tag to fetch from. May be `latest` to track the latest published release.
-        - `asset_pattern` — the asset-name template. `${os}`, `${arch}`, and `${exe_suffix}` expand to `darwin`/`linux`/`windows`, `arm64`/`amd64`/etc., and `.exe`/empty respectively. Patterns that resolve to no matching asset fail at install time with a precise error.
-        - `sha256` — required per-platform digests. Install verifies before extraction. There is no opt-out.
+        - `version` — the release tag to fetch from. May be `latest` to track the latest published release; `latest` resolution follows the same cache TTL and refresh rules as schema resolution ([./extending-lex.lex] §4.4).
+        - `asset_pattern` — the asset-name template. Available variables: `${os}` (`darwin`, `linux`, `windows`), `${arch}` (`amd64`, `arm64`, `386`, `arm`), `${exe_suffix}` (`.exe` on Windows, empty elsewhere), and `${version}` (the resolved release tag — useful for authors whose release tooling embeds the tag in the filename). The `${os}` and `${arch}` values follow the `gh`/Go convention deliberately; authors writing Rust or C++ extensions map their target triples to these strings, which are the lowest common denominator across plugin ecosystems. Patterns that resolve to no matching asset fail at install time with a precise error.
+        - `sha256` — required per-platform digests. Install verifies the digest before writing the binary into `${ext_dir}/`. There is no opt-out.
+
+        v1 ships **raw single-file binaries** only — `asset_pattern` resolves to one downloaded file per `(os, arch)`. Archive-shaped assets (`.tar.gz` containing a tree, multi-file payloads, sidecar resources) are deliberately out of scope for v1. The runtime-tier addendum ([#8]) extends `[release]` to source-archive distribution along the same shape if and when that case becomes load-bearing.
 
         The `${ext_dir}` placeholder in `handler.command` resolves to the install root for this specific extension (`[#4.3]`), so the schema and the handler agree on layout without the author hard-coding paths.
 
@@ -150,8 +154,9 @@ Proposal: Extending Lex — Handler Distribution and Execution
         - Fetch the schema directory from `github.com/acme/lex-labels` (existing schema resolver).
         - For each label whose schema declares a `[release]` block, fetch the asset matching the user's `(os, arch)` from the named release tag.
         - Verify the `sha256` digest. A mismatch is a hard install failure with no recovery beyond the author publishing corrected digests.
-        - On macOS arm64, ad-hoc re-sign the downloaded binary (`codesign --sign -`) to satisfy the kernel's "must have some signature" requirement. This is what `gh` does and the reason its arm64 install path works.
-        - Write the resolved binary into `${ext_dir}/`, alongside a `lex-release.lock` recording the tag, asset name, and digest actually installed.
+        - Write the resolved binary into `${ext_dir}/`, **renaming it to a platform-independent canonical name** by stripping the `-${version}-${os}-${arch}${exe_suffix}` tail from the resolved `asset_pattern`. The result is a stable filename across all platforms (`acme-commenting` in the example above), so `handler.command` can reference one path regardless of where the user is. Mark the file executable on Unix (`chmod +x`).
+        - On macOS, clear the `com.apple.quarantine` extended attribute if set. On macOS arm64, additionally ad-hoc re-sign the binary (`codesign --sign -`) to satisfy the kernel's "must have some signature" requirement. This is what `gh` does, and the reason its arm64 install path works.
+        - Write a `lex-release.lock` alongside the binary, recording the tag, original asset name, and digest actually installed.
 
         Upgrade is `lexd labels upgrade acme` (per-namespace) or `lexd labels upgrade --all`. The host compares the locked tag against the upstream `latest` (or against the value of `release.version` if pinned), and re-runs the install when they differ. Pinned versions never upgrade without an explicit `--force`.
 
@@ -159,7 +164,8 @@ Proposal: Extending Lex — Handler Distribution and Execution
 
         Each label's handler lives in its own directory under the user's data root:
 
-            ${XDG_DATA_HOME:-~/.local/share}/lex/ext/<namespace>/<label>/
+            ${XDG_DATA_HOME:-~/.local/share}/lex/ext/<namespace>/<label>/      (Unix)
+            %LOCALAPPDATA%\lex\ext\<namespace>\<label>\                        (Windows)
 
         `${ext_dir}` in `handler.command` expands to this path. Nothing the extension contains ever lands on the user's PATH, in the user's home, or alongside the user's system binaries. An extension that wants its own writable scratch space gets one inside its install root; an extension that wants to read from the user's filesystem has to declare `capabilities.fs: true` and pass the sandbox.
 
@@ -176,7 +182,7 @@ Proposal: Extending Lex — Handler Distribution and Execution
 
         With `release_pin` set, `lexd labels upgrade` is a no-op for that namespace until the pin moves. Without it, the resolver tracks the schema's `release.version` (which itself may name `latest` or a fixed tag — the schema author's choice).
 
-        This is the same pattern the parent proposal already uses for schema reproducibility ([./extending-lex.lex#4.4]): immutable references cache indefinitely, mutable references are subject to a TTL and an explicit refresh command.
+        This is the same pattern the parent proposal already uses for schema reproducibility ([./extending-lex.lex] §4.4): immutable references cache indefinitely, mutable references are subject to a TTL and an explicit refresh command.
 
 5. The Single-Purpose Tap Repository
 
@@ -214,7 +220,7 @@ Proposal: Extending Lex — Handler Distribution and Execution
     - lex installing, managing, or shipping language runtimes (Node, Python, Lua, JVM, etc.). An extension that needs a runtime declares the dependency in its README and either bundles the runtime into a single executable or asks the user to install it via the user's existing package manager.
     - lex acting as a package manager for OS-level dependencies. A handler that needs `libfoo.so` documents the requirement; the user satisfies it; or the author bundles statically. There is no host-side `apt`/`brew`/`yum` integration.
     - A centralised registry, marketplace, search index, or curation layer at v1. Discovery is `github.com/topics/lex-extension` (mirroring the `gh-extension` convention), or whatever ad-hoc discovery the community converges on.
-    - Code signing as a host responsibility beyond ad-hoc resigning on macOS arm64 to satisfy the kernel. SHA-256 digests in the schema are the v1 integrity story; sigstore attestations and GPG-signed checksums are an additive future tier.
+    - Code signing as a host responsibility beyond ad-hoc re-signing on macOS arm64 to satisfy the kernel. SHA-256 digests in the schema are the v1 integrity story; sigstore attestations and GPG-signed checksums are an additive future tier.
 
 8. Addendum: Runtime Tiers
 
