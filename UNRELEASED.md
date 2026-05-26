@@ -1,5 +1,5 @@
 <!-- Release notes for the next version. -->
-<!-- Updated as work is done; consumed by app-bin/create-release. -->
+<!-- Updated as work is done. -->
 
 ### Added
 
