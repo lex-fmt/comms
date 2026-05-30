@@ -1,0 +1,80 @@
+site_name: lex
+site_description: A plain text document format designed for the complete lifecycle of an idea
+site_url: https://lex.ing/
+repo_url: https://github.com/lex-fmt/comms
+repo_name: lex-fmt/comms
+edit_uri: edit/main/docs/
+
+docs_dir: docs
+site_dir: site
+
+theme:
+  name: material
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+    - content.action.edit
+    - search.highlight
+    - search.suggest
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+plugins:
+  - lex
+  - search
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+
+# Keep dev-only files out of the published site: README.lex is the
+# site's own architecture note (not a page), and requirements.txt is the
+# pip pin file that happens to live under docs_dir.
+exclude_docs: |
+  README.lex
+  requirements.txt
+
+# Paths use .md even though several sources are .lex on disk — the
+# mkdocs-lex plugin rewrites .lex to .md internally (see its README).
+nav:
+  - Home: index.md
+  - Why: why.md
+  - About: about.md
+  - Specifications: specs/index.md
+  - Editors: editors.md
+  - Tools: tools.md
+  - Dummy Session: dummy-session.md
+  - Contributing: contributing.md
+  - Reference:
+      - Font ligatures & symbols: font-ligatures-symbols.md
+      - Babel interop scope: interop-scope.md

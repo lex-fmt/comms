@@ -1,0 +1,42 @@
+# Thin caller of arthur-debert/release/.github/workflows/mkdocs.yml@v2.
+#
+# Build + deploy the lex.ing docs site. On push to main: build (strict)
+# + deploy to GitHub Pages. On PRs touching docs: build-only (strict),
+# no deploy — catches broken refs / missing nav entries / plugin errors
+# before merge. The mkdocs-lex plugin renders the .lex sources natively
+# (auto-downloads lexd on first run), so no lex CLI setup step is needed.
+#
+# No `secrets:` block: the reusable workflow does pip install + mkdocs
+# build + Pages deploy entirely via the job's GITHUB_TOKEN + OIDC, so
+# nothing crosses the org boundary (comms is lex-fmt, release is
+# arthur-debert).
+
+name: Docs
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'mkdocs.yml'
+      - '.github/workflows/docs.yml'
+  pull_request:
+    paths:
+      - 'docs/**'
+      - 'mkdocs.yml'
+      - '.github/workflows/docs.yml'
+  workflow_dispatch:
+
+permissions:
+  # All three required upfront — GitHub validates reusable-workflow
+  # permission compatibility at workflow-load time, including the
+  # deploy job that only runs on push-to-main.
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  docs:
+    uses: arthur-debert/release/.github/workflows/mkdocs.yml@v2
+    with:
+      requirements: docs/requirements.txt

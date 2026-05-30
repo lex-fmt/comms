@@ -1,7 +1,11 @@
-#!/bin/bash
-set -e
+#!/usr/bin/env bash
+set -euo pipefail
 
-PORT=4000
+# Local docs preview. Serves the MkDocs site with live reload. The
+# mkdocs-lex plugin re-renders .lex sources on edit. Requires the docs
+# deps: pip install -r docs/requirements.txt (ideally in a venv).
+
+PORT=8000
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -16,6 +20,11 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-cd "$(dirname "$0")/docs"
-eval "$(rbenv init -)"
-bundle exec jekyll serve --livereload --port "$PORT"
+cd "$(dirname "$0")"
+
+if ! command -v mkdocs >/dev/null 2>&1; then
+    echo "mkdocs not found. Install with: pip install -r docs/requirements.txt" >&2
+    exit 1
+fi
+
+exec mkdocs serve --dev-addr "localhost:${PORT}"

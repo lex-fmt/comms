@@ -1,0 +1,6 @@
+# Consumer override for release-sync. comms is the docs-site Kind (a
+# root mkdocs.yml). Opt into the mkdocs Capability on top of the Kind
+# so the canonical docs-build check (bin/check-docs) lands alongside the
+# Kind's own bin/check.
+capabilities:
+  - mkdocs

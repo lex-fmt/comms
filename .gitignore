@@ -51,10 +51,7 @@ specs/**/*.treeviz.*
 *.app
 .vite
 test-results
-# docs site
-docs/_includes/_lex/
-docs/_site/
-docs/.jekyll-cache/
-docs/.bundle/
-docs/bin/
-docs/vendor/
+# docs site (mkdocs)
+site/
+docs/site/
+.mkdocs_lex_cache/

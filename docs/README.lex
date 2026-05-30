@@ -1,150 +1,96 @@
 lex.ing Site - Architecture
 
 This directory contains the source for lex.ing, the documentation site for
-the lex markup language. The site uses Jekyll for templating and GitHub Pages
-for hosting, with page content authored in lex format.
+the lex markup language. The site uses MkDocs (Material theme) with the
+mkdocs-lex plugin for native .lex rendering, and GitHub Pages for hosting.
 
 
 1. Directory Structure
 
+   mkdocs.yml               MkDocs config (theme, nav, plugins) — at repo root
    docs/
-   ├── _config.yml          Jekyll configuration
-   ├── Gemfile              Ruby dependencies
    ├── CNAME                Custom domain (lex.ing)
-   ├── .ruby-version        Ruby version for rbenv
+   ├── requirements.txt     Python deps (mkdocs, material, mkdocs-lex-plugin)
    │
-   ├── _layouts/
-   │   └── default.html     Site template (header, nav, footer)
+   ├── index.lex            Lex-authored pages (edited directly; the
+   ├── about.lex            mkdocs-lex plugin converts .lex → markdown
+   ├── why.lex              just-in-time at build time)
+   ├── tools.lex
+   ├── dummy-session.lex
+   ├── font-ligatures-symbols.lex
+   ├── interop-scope.lex
    │
-   ├── _includes/
-   │   └── _lex/            Generated HTML fragments (gitignored)
-   │       ├── index.html
-   │       ├── about.html
-   │       └── ...
-   │
-   ├── css/                 Stylesheets
-   │   ├── variables.css    Shared design tokens (fonts, colors, spacing)
-   │   ├── site.css         Site chrome (header, nav, footer, markdown)
-   │   └── lex-content.css  Lex document rendering (.lex-* classes)
-   │
-   ├── content/             Lex source files (what you edit)
-   │   ├── index.lex
-   │   ├── about.lex
-   │   ├── why.lex
-   │   ├── tools.lex
-   │   └── dummy-session.lex
-   │
-   ├── index.md             Jekyll page wrappers (thin, rarely change)
-   ├── about.md             Each just includes the generated HTML:
-   ├── why.md                 {% include _lex/about.html %}
-   ├── tools.md
-   ├── dummy-session.md
    ├── editors.md           Pure markdown pages (no lex source)
    ├── contributing.md
+   ├── specs/index.md
    │
-   ├── build                Lex → HTML build script
-   ├── serve                Local dev server (Jekyll + livereload)
-   │
-   └── _site/               Jekyll output (gitignored)
+   ├── README.lex           This file (excluded from the build)
+   └── site/                MkDocs output (gitignored)
 
 
 2. Build Pipeline
 
-   The site generation has two stages:
+   Single stage. MkDocs builds the site; the mkdocs-lex plugin intercepts
+   each .lex file and converts it to markdown via `lexd convert` on the
+   fly (no temporary .md files, no separate build step). The Material
+   theme styles the result. The plugin auto-downloads the matching `lexd`
+   binary from lex-fmt/lex releases on first run (cached under
+   .mkdocs_lex_cache/); if `lexd` is already on PATH it uses that.
 
-   1. Lex → HTML (./build)
-      For each content/*.lex file:
-      - Run: lex <file> --to html --css-path css/lex-content.css
-      - Extract the <div class="lex-document">...</div> fragment
-      - Write to _includes/_lex/<name>.html
-   2. Jekyll Build
-      Jekyll processes the site:
-      - Page wrappers (*.md) include the generated HTML fragments
-      - Layouts wrap content with site chrome (header, nav, footer)
-      - Output goes to _site/
+   Nav paths in mkdocs.yml use .md extensions even for .lex sources — the
+   plugin tricks MkDocs into treating them as markdown pages.
 
 
-3, Local Development
+3. Local Development
 
    Prerequisites:
-   - Ruby 3.2+ (via rbenv)
-   - Bundler
-   - lex CLI (from lex-fmt/tools releases or built locally)
-   - direnv (optional, for automatic environment setup)
+   - Python 3.x
 
-   Setup:
-      cd docs
-      bundle install
-      direnv allow               # Sets LEX_BIN from .envrc
-   Build lex content:
-      ./build                    # Uses LEX_BIN from .envrc or 'lex' from PATH
-   Run dev server:
-      ../serve                   # http://localhost:4000 with livereload
-      ../serve --port 8080       # Custom port
-   :: shell :: 
+   Setup and serve:
+      python -m venv .venv && source .venv/bin/activate
+      pip install -r docs/requirements.txt
+      ./serve                     # http://localhost:8000 with livereload
+      ./serve --port 8080         # custom port
+   Build (strict, same as CI):
+      bin/check                   # mkdocs build --strict (after release-sync)
+      mkdocs build --strict       # or directly
+   :: shell ::
 
 
-4, GitHub Pages Deployment
+4. GitHub Pages Deployment
 
    The site deploys automatically on push to main via GitHub Actions.
 
-   Workflow (.github/workflows/pages.yml):
+   The workflow (.github/workflows/docs.yml) is a thin caller of the
+   canonical reusable workflow:
 
-   1. Checkout repository
-   2. Setup Ruby + bundle install
-   3. Download lex CLI from lex-fmt/tools releases
-   4. Run ./build (generates _includes/_lex/*.html)
-   5. Run Jekyll build
-   6. Deploy to GitHub Pages
+      uses: arthur-debert/release/.github/workflows/mkdocs.yml@v2
+   :: yaml ::
 
-   The lex CLI version is pinned in the workflow (LEX_VERSION).
-
-
-5. CSS Architecture
-
-   Three files, loaded in order:
-   
-   1. variables.css
-      - CSS custom properties for fonts, colors, spacing
-      - Change typography/colors here to update entire site
-   2. site.css
-      - Site chrome: header, navigation, footer
-      - Markdown content styling (for non-lex pages like editors.md)
-      - Scoped to site structure elements
-   3. lex-content.css
-      - Lex document rendering
-      - All rules scoped to .lex-* classes
-      - Can be used standalone for lex HTML exports
+   It runs `mkdocs build --strict` and deploys to GitHub Pages. PRs that
+   touch docs build (strict) without deploying, so broken refs fail before
+   merge. No lex CLI download step is needed — the mkdocs-lex plugin
+   fetches `lexd` itself.
 
 
-6. Adding a New Page
+5. Adding a New Page
 
    For a lex-authored page:
 
-   1. Create content/<name>.lex with your content
-   2. Create <name>.md wrapper:
-         ---
-         layout: default
-         title: Page Title
-         ---
-         {% include _lex/<name>.html %}
-      :: md ::
-   3. Run ./build to generate the HTML
-   4. Add nav link in _layouts/default.html if needed
+   1. Create docs/<name>.lex with your content
+   2. Add a nav entry in mkdocs.yml pointing at <name>.md (the plugin
+      maps the .md path to the .lex source)
 
    For a pure markdown page:
 
-   1. Create <name>.md with front matter and content
-   2. Add nav link if needed
+   1. Create docs/<name>.md with your content
+   2. Add a nav entry in mkdocs.yml
 
 
-7. Updating Lex CLI Version
+6. Release Fleet
 
-   Edit .github/workflows/pages.yml:
-
-      env:
-         LEX_VERSION: lex-cli-v0.2.6    # Update this
-         LEX_ARCHIVE: lex-x86_64-unknown-linux-gnu.tar.gz
-   :: yaml :: 
-
-   Releases are at: https://github.com/lex-fmt/tools/releases
+   This repo is managed by arthur-debert/release as the docs-site Kind
+   (detected by the root mkdocs.yml). `release-sync` materializes the
+   shared lint gate + tooling into .release/ and symlinks; the mkdocs
+   Capability (.release-sync.yaml) adds bin/check-docs. Do not hand-edit
+   files under .release/ or the managed symlinks.
