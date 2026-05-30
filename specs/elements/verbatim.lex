@@ -14,10 +14,9 @@ Syntax
 		    preserves all formatting
 		:: label params ::
 
-	Marker form (no content, typically for binary references):
+	Marker form (no indented content, typically for binary references):
 		Subject:
-		    optional caption text now lives inside the block
-		:: label params ::
+		:: label params :: optional caption text
 
 	Note: Optional blank line after subject is allowed in both forms.
 

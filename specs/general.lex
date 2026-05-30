@@ -38,7 +38,7 @@ The lex language
 
         Note: The block form has a single closing :: on the opening line. The indented content that follows is delimited by indentation (indent/dedent), not by a second :: marker.
 
-        Annotation content can include paragraphs, lists, definitions, verbatim blocks, tables, and nested annotations, but cannot contain sessions.
+        Annotation content can include paragraphs, lists, definitions, verbatim blocks, and tables, but cannot contain sessions or nested annotations.
 
         Labels carry namespace semantics that determine who owns them, how they're spelled, and how they round-trip through formatting. See [#4] for the full label-namespace model — reserved prefixes (`lex.*`, `doc.*`), bare-form aliases (the user-facing voice), and the community shape (`owner.repo`). Annotations are the most visible carrier of labels, but the same model applies to verbatim closers and table closers.
 

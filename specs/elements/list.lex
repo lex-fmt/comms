@@ -113,7 +113,6 @@ Content
 		- Mix of paragraphs and nested lists
 	List items CANNOT contain:
 		- Sessions (use definitions instead for titled containers)
-		- Annotations (inline or block)
 
 Block Termination
 

@@ -47,7 +47,6 @@ Content Structure
 
 	Cannot contain:
 		- Sessions (keeps definitions as focused explanatory units)
-		- Annotations with block content (annotations can only be markers/single-line)
 
 Block Termination
 
