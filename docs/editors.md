@@ -1,8 +1,3 @@
----
-layout: default
-title: Editors
----
-
 # Editor Support
 
 lex has first-class editor support through the `lex-lsp` language server. All editors share the same language intelligence backend.
@@ -31,7 +26,7 @@ Standalone, distraction-free editor built specifically for lex.
 
 [Download Latest Release](https://github.com/lex-fmt/lexed/releases/latest) | [View on GitHub](https://github.com/lex-fmt/lexed)
 
-### Features
+### Lexed Features
 
 - Monochrome theme (typography-focused, uses bold/italic instead of colors)
 - Multi-pane editing with flexible splits
@@ -59,9 +54,10 @@ Full VS Code integration with export/import commands and live preview.
 
 [View on GitHub](https://github.com/lex-fmt/vscode)
 
-### Installation
+### VS Code Installation
 
 Build from source:
+
 ```bash
 cd vscode
 npm ci
@@ -83,7 +79,7 @@ npx vsce package
 
 Commands appear in the command palette and context menus when editing .lex or .md files.
 
-### Theming
+### VS Code Theming
 
 The extension applies a monochrome theme to .lex files using typography (bold, italic) and grayscale intensity. Adapts to VS Code's light/dark mode.
 
@@ -95,9 +91,10 @@ Native Neovim plugin with LSP integration.
 
 [View on GitHub](https://github.com/lex-fmt/nvim)
 
-### Installation
+### Neovim Installation
 
 With lazy.nvim:
+
 ```lua
 {
     "lex-fmt/nvim",
@@ -110,6 +107,7 @@ With lazy.nvim:
 ```
 
 With packer.nvim:
+
 ```lua
 use {
     "lex-fmt/nvim",
@@ -122,7 +120,7 @@ use {
 
 The plugin auto-downloads the `lex-lsp` binary on first use.
 
-### Configuration
+### Neovim Configuration
 
 ```lua
 require("lex").setup({
@@ -141,7 +139,7 @@ require("lex").setup({
 })
 ```
 
-### Theming
+### Neovim Theming
 
 The default monochrome theme uses grayscale intensity levels:
 

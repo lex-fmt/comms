@@ -1,3 +1,7 @@
+<!-- BEGIN release-managed orientation — managed by release-sync; do not edit -->
+@.release/ORIENTATION.md
+<!-- END release-managed orientation -->
+
 ## Releasing
 
 This repo is the source of the lex release cascade. Cutting a release here propagates automatically to all downstream lex-fmt repos via `repository_dispatch` (`on-upstream-released` handler workflows).

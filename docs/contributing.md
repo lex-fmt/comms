@@ -1,8 +1,3 @@
----
-layout: default
-title: Contributing
----
-
 # Contributing
 
 Lex is open source and contributions are welcome.
@@ -21,7 +16,7 @@ The project lives under the [lex-fmt](https://github.com/lex-fmt) organization:
 
 ## Dependency Flow
 
-```
+```text
                 comms/specs
                      |
                      v

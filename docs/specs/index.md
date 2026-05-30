@@ -1,8 +1,3 @@
----
-layout: default
-title: Specifications
----
-
 # lex Specifications
 
 This is the formal reference for the lex document format.
@@ -11,7 +6,7 @@ This is the formal reference for the lex document format.
 
 lex documents are plain text files where structure is defined by indentation and minimal markers.
 
-```
+```text
 Document Title
 
 1. First Section
@@ -64,7 +59,7 @@ The double colon (`::`) is the only explicit syntax in lex. It's used for:
 
 Hierarchical sections with optional numbered titles.
 
-```
+```text
 1. Main Section
 
     Content here.
@@ -88,7 +83,7 @@ Sessions require a blank line between the title and content.
 
 Term-explanation pairs.
 
-```
+```text
 Term:
     The definition follows immediately after the colon.
     No blank line between term and content.
@@ -104,7 +99,7 @@ Definitions do NOT have a blank line between the subject and content (unlike ses
 
 Sequences of items with various markers.
 
-```
+```text
 - Unordered with dashes
 - Another item
 
@@ -124,7 +119,7 @@ Lists require a preceding blank line and at least 2 items. A single item becomes
 
 Consecutive non-blank lines form a paragraph.
 
-```
+```text
 This is a paragraph. It can span
 multiple lines until a blank line
 separates it from the next block.
@@ -136,7 +131,7 @@ This is another paragraph.
 
 Content that should not be parsed as lex.
 
-```
+```text
 Code Block:
     console.log("Hello, world!");
     const x = 42;
@@ -151,7 +146,7 @@ The closing `::` can include a label and parameters.
 
 Metadata attached to content.
 
-```
+```text
 :: author :: Jane Doe
 :: date :: 2024-01-15
 
@@ -164,6 +159,7 @@ Content here has the annotation attached.
 ```
 
 Forms:
+
 - **Marker**: `:: label ::`
 - **Single-line**: `:: label :: inline content`
 - **Block**: `:: label ::\n  content\n::`
