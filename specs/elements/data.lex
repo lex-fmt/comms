@@ -71,10 +71,9 @@ Embedding Elements
 
 Line Classification
 
-	The lexer classifies a data marker line as a single line type:
-
-	- <data-marker-line>: closed form with both opening and closing :: markers.
-	  Used for annotation start lines and verbatim closing lines.
+	A data marker line classifies as a single line type, <data-marker-line> (closed
+	form with both opening and closing :: markers), used for annotation start lines
+	and verbatim closing lines.
 
 	It requires a valid label between the markers. The :: inside quoted parameter
 	values (e.g., :: note msg=":: value" ::) is not treated as a structural marker.
