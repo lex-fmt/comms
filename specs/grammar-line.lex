@@ -50,39 +50,33 @@ Line Token Grammar for lex
         syntactic pattern in both roles. Tail content after the closing marker
         stays inline.
 
-    3.3. <data-line>
-
-        <data-line> = <indent>? <lex-marker> <whitespace>
-            <label> (<whitespace> <parameters>)? <whitespace>* <line-break>
-        A data marker in open form (see specs/v1/elements/data.lex) without a
-        trailing :: marker. Used for metadata headers where the payload stops
-        after the label block.
-
-    3.4. <subject-or-list-item-line>
+    3.3. <subject-or-list-item-line>
 
         <subject-or-list-item-line> =
             <indent>? <list-marker> <whitespace> <text-span>+ <colon> <line-break>
         Starts with a list marker and ends with a colon. Parser decides whether it
         behaves like a subject or a list entry based on surrounding context.
 
-    3.5. <list-line>
+    3.4. <list-line>
 
         <list-line> = <indent>? <list-marker> <whitespace> <text-span>+ <line-break>
         Covers bullet/ordered markers (dash, numbers with period/paren, single
         letters, Roman numerals). Does not end with a colon.
 
-    3.6. <subject-line>
+    3.5. <subject-line>
 
         <subject-line> = <indent>? <text-span>+ <colon> <line-break>
         Any line whose last non-whitespace token is a colon and that was not
         claimed by the previous rules.
 
-    3.7. <paragraph-line>
+    3.6. <paragraph-line>
 
         <paragraph-line> = <indent>? <text-span>+ <line-break>
         Fallback for non-blank lines that do not match the specialised patterns.
+        A `:: label` with no closing :: marker is not a data marker — there is no
+        open form — so it lands here and its text is preserved as content.
 
-    3.8. <dialog-line>
+    3.7. <dialog-line>
 
         Dialog detection runs after the initial classification:
         - Trigger: a <list-line> whose last two non-whitespace tokens are both
@@ -97,11 +91,10 @@ Line Token Grammar for lex
     The classifier evaluates the predicates in this sequence:
         1. <blank-line>
         2. <data-marker-line>
-        3. <data-line>
-        4. <subject-or-list-item-line>
-        5. <list-line>
-        6. <subject-line>
-        7. <paragraph-line>
+        3. <subject-or-list-item-line>
+        4. <list-line>
+        5. <subject-line>
+        6. <paragraph-line>
 
     Structural tokens (<indent>, <dedent>, <document-start>) are emitted directly
     by the grouping pass and bypass the ordered checks above. <dialog-line> is a
