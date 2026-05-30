@@ -26,6 +26,16 @@ Proposal: Diagnostic Configuration
 
     The two shapes do not collide. Extension namespaces are declared in `[labels]` and cannot be bare — a registered namespace always contributes the leading segment. A code with no leading-segment match against any declared namespace is therefore built-in by construction. The same convention governs label identifiers ([./extending-lex.lex]); authors learn one rule for both surfaces.
 
+    Declared and validated:
+        Extension namespaces declare the codes their handlers emit in the label schema, as a `diagnostics` list — each entry carries the bare `code`, an optional `description`, and a `default_severity` (declaration metadata for tooling and config generation; the runtime intrinsic severity still rides on the handler-emitted `Diagnostic.severity`). The host aggregates these per namespace and schema-validates every `<namespace>.<code>` entry under `[diagnostics.rules]` against the resolved registry. The classification is bounded-extensibility-aware, matching `[labels]`:
+
+        - A code the namespace declares resolves normally.
+        - A code the namespace does *not* declare is a dead letter — it retunes nothing — and is surfaced as a warning naming the offending key, the closest declared code (`did you mean …?`), and the namespace's declared codes.
+        - A rule whose namespace is not registered passes silently, so authors may stage rules ahead of installing the extension that provides them.
+        - The per-namespace `<namespace>.diagnostic` fallback — the wire code for a handler diagnostic emitted with no explicit `code` — is always a valid target, even though no schema declares it.
+
+        Namespace resolution honours dotted namespaces: `mit.plasma-specs.invalid-version` attributes to the registered namespace `mit.plasma-specs` and the code `invalid-version`, by longest registered prefix rather than first-dot split.
+
 2. Severity Levels
 
     Three levels, modelled on Clippy:
