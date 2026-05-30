@@ -30,7 +30,7 @@ Proposal: Diagnostic Configuration
         Extension namespaces declare the codes their handlers emit in the label schema, as a `diagnostics` list — each entry carries the bare `code`, an optional `description`, and a `default_severity` (declaration metadata for tooling and config generation; the runtime intrinsic severity still rides on the handler-emitted `Diagnostic.severity`). The host aggregates these per namespace and schema-validates every `<namespace>.<code>` entry under `[diagnostics.rules]` against the resolved registry. The classification is bounded-extensibility-aware, matching `[labels]`:
 
         - A code the namespace declares resolves normally.
-        - A code the namespace does *not* declare is a dead letter — it retunes nothing — and is surfaced as a warning naming the offending key, the closest declared code (`did you mean …?`), and the namespace's declared codes.
+        - A code the namespace does *not* declare is a dead letter — it has no effect — and is surfaced as a warning naming the offending key, the closest declared code (`did you mean …?`), and the namespace's declared codes.
         - A rule whose namespace is not registered passes silently, so authors may stage rules ahead of installing the extension that provides them.
         - The per-namespace `<namespace>.diagnostic` fallback — the wire code for a handler diagnostic emitted with no explicit `code` — is always a valid target, even though no schema declares it.
 
