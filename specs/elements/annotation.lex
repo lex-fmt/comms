@@ -9,8 +9,8 @@ Introduction
 
 	Core features:
 
-	- Annotations embed a data node: :: <label> <parameters>? (no closing ::)
-	- After the data node, annotations add a closing :: marker and optional inline content
+	- Annotations use a data marker (specs/v1/elements/data.lex) as their header: :: <label> <parameters>? ::
+	- After the closing :: marker, annotations may carry optional inline content
 	- Labels [./label.lex] remain mandatory; parameters [./parameter.lex] are optional augmentations
 	- Annotations have optional content: which can be the single line shortcut or the regular content conatainer form, which allows all elements but sessions to be part (including nesting). While not prohibited, annotations should not contain other annotations as their content as the semantic meaning would be ... why bother?
 

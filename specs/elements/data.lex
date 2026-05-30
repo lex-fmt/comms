@@ -12,20 +12,16 @@ Introduction
 
 Syntax
 
-	A data marker line has two possible forms depending on context:
+	A data marker line is always closed — opening and closing :: markers around a
+	label and optional parameters:
 
-	Open form (no trailing :: marker):
-		<data> = <lex-marker> <whitespace> <label> (<whitespace> <parameters>)?
-
-	Closed form (with trailing :: marker):
 		<data-marker-line> = <lex-marker> <whitespace> <label> (<whitespace> <parameters>)? <whitespace>? <lex-marker>
 
-	The open form produces a <data-line> token in the lexer; the closed form produces
-	a <data-marker-line> token. Both carry the same payload: a label and optional
-	parameters.
+	It produces a <data-marker-line> token in the lexer. There is no "open form":
+	a `:: label` with no closing :: is not a data marker — it is ordinary text
+	(the parser keeps it as paragraph content rather than dropping it).
 
 	Examples:
-		:: note severity=high
 		:: javascript caption="Hello World" ::
 		:: warning ::
 
@@ -75,15 +71,14 @@ Embedding Elements
 
 Line Classification
 
-	The lexer classifies data marker lines into two line types:
+	A data marker line classifies as a single line type, <data-marker-line> (closed
+	form with both opening and closing :: markers), used for annotation start lines
+	and verbatim closing lines.
 
-	- <data-marker-line>: closed form with both opening and closing :: markers.
-	  Used for annotation start lines and verbatim closing lines.
-	- <data-line>: open form with only the opening :: marker. Used for metadata
-	  headers where the payload stops after the label block.
-
-	Both require a valid label between the markers. The :: inside quoted parameter
+	It requires a valid label between the markers. The :: inside quoted parameter
 	values (e.g., :: note msg=":: value" ::) is not treated as a structural marker.
+	A `:: label` with no closing :: is not a data marker line — it classifies as a
+	paragraph line, so its text is preserved rather than dropped.
 
 Examples
 
@@ -98,6 +93,3 @@ Examples
 
 	Verbatim closing:
 		:: javascript caption="Hello World" ::
-
-	Open form (no closing marker):
-		:: note severity=high
