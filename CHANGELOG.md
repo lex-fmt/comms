@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+### Changed
+
+- `specs/proposals/diagnostic-config.lex`: document schema-declared
+  extension diagnostic codes and host validation of `[diagnostics.rules]`
+  against the resolved registry (shipped in lex#706). A new "Declared and
+  validated" subsection in §1 covers the `diagnostics` schema list,
+  dead-letter detection with closest-match suggestions, silent
+  pass-through for unregistered namespaces, the always-valid
+  `<namespace>.diagnostic` fallback, and longest-prefix namespace
+  resolution for dotted namespaces.
+
 ## [0.16.2] - 2026-05-17
 
 ## [0.16.1] - 2026-05-07
