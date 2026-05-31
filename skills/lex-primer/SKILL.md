@@ -19,17 +19,19 @@ Structure = indentation (4 spaces per level). The only explicit syntax marker is
 ## The Six Elements
 
 ### 1. Paragraph (fallback)
+
 Consecutive non-blank lines. If nothing else matches, it's a paragraph.
 
-```
+```text
 This is a paragraph.
 It can span multiple lines.
 ```
 
 ### 2. Session (heading + content)
+
 A title line, then a **blank line**, then **indented** content.
 
-```
+```text
 1. Introduction
 
     This paragraph is inside the "Introduction" session.
@@ -44,9 +46,10 @@ A title line, then a **blank line**, then **indented** content.
 - Content MUST be indented relative to the title
 
 ### 3. Definition (term + immediate content)
+
 A subject line ending with `:`, then **immediately** indented content (NO blank line).
 
-```
+```text
 HTTP Methods:
     GET retrieves resources.
     POST creates new resources.
@@ -57,9 +60,10 @@ HTTP Methods:
 - Cannot contain sessions
 
 ### 4. List (2+ items after blank line)
+
 Two or more list-item lines preceded by a blank line.
 
-```
+```text
 Some intro text.
 
 - First item
@@ -67,16 +71,17 @@ Some intro text.
 - Third item
 ```
 
-- Markers: `- ` (dash), `1. ` or `1) ` (numbered), `a. ` or `a) ` (alpha), `I. ` (roman)
+- Markers: `-` (dash), `1.` or `1)` (numbered), `a.` or `a)` (alpha), `I.` (roman)
 - MUST have at least 2 items (single item = paragraph)
 - MUST be preceded by a blank line (or document start)
 - NO blank lines between items (blank line terminates the list)
 - Marker style of first item defines the list style; mixing markers is allowed
 
 ### 5. Verbatim Block (raw content)
+
 A subject line ending with `:`, optional blank line, indented raw content, and a closing `::` annotation.
 
-```
+```text
 Example code:
 
     fn main() {
@@ -91,9 +96,10 @@ Example code:
 - Marker form (no content): just subject + closing annotation
 
 ### 6. Annotation (metadata)
+
 Structured metadata using `::` markers.
 
-```
+```text
 :: note ::
 :: warning status=open :: This needs review
 :: aside ::
@@ -103,13 +109,14 @@ Structured metadata using `::` markers.
 ```
 
 Three forms:
+
 - **Marker**: `:: label ::` (no content)
 - **Single-line**: `:: label :: inline text`
 - **Block**: `:: label ::` + newline + indented content + bare `::` closing
 
 ## Inline Formatting
 
-```
+```text
 *bold text*           — strong (NOT **double asterisk**)
 _italic text_         — emphasis (NOT *single asterisk*)
 `code`                — inline code
@@ -118,6 +125,7 @@ _italic text_         — emphasis (NOT *single asterisk*)
 ```
 
 Reference types (determined by content):
+
 - `[https://example.com]` — URL
 - `[@doe2024]` — citation
 - `[^note1]` — footnote (labeled)
@@ -150,6 +158,7 @@ Escape with backslash: `\*not bold\*`, `\[not a link\]`
 ## Parse Precedence
 
 The parser tries elements in this order:
+
 1. Verbatim block (has closing annotation)
 2. Annotation (`::` markers)
 3. List (blank line + 2+ items)
