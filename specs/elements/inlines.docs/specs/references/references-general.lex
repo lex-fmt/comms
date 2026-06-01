@@ -43,17 +43,80 @@ Complete specification for the general reference system - the foundation for lin
         - Session patterns (`#number`) → Session cross-references
         - Plain text → General document references
 
-    2.3 Implicit Anchors
+    2.3. Implicit Anchors
 
-        In HTML, hence Markdown and most markdup langugages, the analogous elements to Lex's refs are links. In these formats, the links define the destination (where the link goes), and the anchor (what in the document the link is applied to, i.e. the words ).
-        Lex uses, however, and implicit anchor, that is the link's anchor is the last word that preceeded. For example, here it would be the "website" word, as in lex's website [https://lex.ing]. The reason for this is the combination of two facts: 
-        
-        - One of the largest usabilities with Markdown is precisely the link []() (which comes first, space between? ). User interaction is very consistent on this as a source of frustration.
-        - By far most links are attached to a single word, and when they do not, no significant meaning is lost.
+        In HTML — and therefore Markdown and most markup languages — the analogue of a Lex reference is the link, which carries both a destination (where it points) and an anchor (the text the link is applied to). Lex keeps the destination inside the brackets but derives the anchor *implicitly* from position, so the author never writes the anchor text twice. The motivation is twofold:
 
-        That is, given the large UX issues created and the reduced value it gives, Lex opts for the implicit anchor, that is say foo [http://example.com] is the equivalent for <a href="http://example.com">foo</a> in HTML land.
-        If the reference is the first word in the  text line, then the anchor becomes the first word to follow it, and , if it's the only text in a line, it's anchor becomes the url istelf (which is linked)
-        
+        - One of the largest usability problems with Markdown is precisely its link form `[]()` (which part comes first? is there a space?). It is a consistent source of friction.
+        - The overwhelming majority of links cover a single word or a single line, and when they do not, little meaning is lost.
+
+        Lex offers two anchor scopes: a word anchor (inline references) and a whole-element anchor (reference lines). The scope is chosen by where the reference sits, never by a separate marker.
+
+    2.3.1. Word anchors (inline references)
+
+        A reference that shares its line with other text is an inline reference, and it anchors a single word:
+
+        - Preceding word (default): the word immediately before the reference.
+              the project website [https://lex.ing]   ->  anchor = "website"
+        - Following word: when the reference is the first token on the line and text follows it on the same line, the anchor is the word immediately after.
+              [https://lex.ing] is the home page       ->  anchor = "is"
+
+        To anchor exactly one word, place the reference directly after it; no surrounding space is required:
+              Hello[./file.txt] World                  ->  anchor = "Hello"
+
+        So `foo [http://example.com]` is the equivalent of `<a href="http://example.com">foo</a>` in HTML.
+
+    2.3.2. Whole-element anchors (reference lines)
+
+        A reference that is the *only* content on its line is a reference line. Its anchor is the entire head line of the element directly above it:
+
+              Getting Started
+              [./readme.txt]
+
+                  Welcome to the docs.
+
+        The reference line anchors the whole session title "Getting Started". The same holds for the head line of every element:
+
+              - Food
+              - Water
+              [https://water.example]
+              - Bread
+
+        anchors the entire "Water" list item.
+
+        The anchor is always the element's own head line — never its content or its children:
+
+        - Session: the title line (not the section body)
+        - List item: the item's own line (not nested items or continuation paragraphs)
+        - Definition: the subject term (the trailing colon is the marker, excluded from the anchor)
+        - Verbatim block: the subject line (not the verbatim content)
+        - Paragraph: the single line directly above the reference line
+
+        A reference line only ever looks *upward*. If there is no content line directly above it — it is the first line of its container, or is preceded by a blank line — the reference line stands alone and links its own text, exactly as a lone inline reference would:
+
+              See the upstream project:
+
+              [https://github.com/lex-fmt/lex]
+
+        A reference line placed *above* an element does not attach to the element below it.
+
+    2.3.3. Reference lines and parsing
+
+        A reference line is transparent to structural parsing: it is neither a content line nor a blank line. It is removed from the line stream before document structure is resolved, so the lines surrounding it retain their original adjacency.
+
+        This matters because a blank line is significant in Lex: the presence or absence of a blank line after a subject is what separates a definition from a session (see ../../../definition.lex). If a reference line were treated as a blank line, the following definition would silently become a session:
+
+              API Endpoint:
+              [./endpoint.txt]
+                  A URL that provides access to a resource.
+
+        Removing the reference line (rather than blanking it) preserves the no-blank-line adjacency, so the element stays a definition and the reference line anchors the subject "API Endpoint".
+
+        At most one reference line may anchor a given element. Stacked reference lines, and a reference line whose anchored head line also carries an inline reference (which would nest two links over the same text), are illegal: the parser honors the whole-line anchor only and emits a diagnostic warning for the overlap.
+
+    2.3.4. Reference type and anchor scope
+
+        Whole-element anchoring applies only to link-like references — those that render as a span of linked text (Url, File, Session, General). Marker-style references — footnotes `[1]`, citations `[@key]`, and annotation references `[::label]` — render as markers or superscripts, so a whole-element anchor has no visual meaning for them; on a reference line they self-link or resolve as usual. This split is a property of the reference type, not of position.
 3. Reference Types
 
     3.1. External Links
