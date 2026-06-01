@@ -2,7 +2,7 @@ Reference Anchoring Fixture
 
 This fixture exercises every anchoring case from references-general.lex §2.3.
 Each session names the case and shows the construct; parser tests assert the
-resolved anchor for the marked reference.
+resolved anchor for each reference shown.
 
 1. Inline word anchors
 

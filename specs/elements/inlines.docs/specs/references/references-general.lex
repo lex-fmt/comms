@@ -68,7 +68,7 @@ Complete specification for the general reference system - the foundation for lin
 
     2.3.2. Whole-element anchors (reference lines)
 
-        A reference that is the *only* content on its line is a reference line. Its anchor is the entire head line of the element directly above it:
+        A *link-like* reference (Url, File, Session, General) that is the *only* content on its line is a reference line. Its anchor is the entire head line of the element directly above it:
 
               Getting Started
               [./readme.txt]
@@ -90,7 +90,7 @@ Complete specification for the general reference system - the foundation for lin
         - List item: the item's own line (not nested items or continuation paragraphs)
         - Definition: the subject term (the trailing colon is the marker, excluded from the anchor)
         - Verbatim block: the subject line (not the verbatim content)
-        - Paragraph: the single line directly above the reference line
+        - Paragraph: the single line directly above the reference line. A paragraph may span several lines; the anchor is deliberately just that one line, not the whole paragraph.
 
         A reference line only ever looks *upward*. If there is no content line directly above it — it is the first line of its container, or is preceded by a blank line — the reference line stands alone and links its own text, exactly as a lone inline reference would:
 
@@ -99,6 +99,8 @@ Complete specification for the general reference system - the foundation for lin
               [https://github.com/lex-fmt/lex]
 
         A reference line placed *above* an element does not attach to the element below it.
+
+        Only link-like references form reference lines. A marker-style reference (footnote, citation, annotation reference) alone on its line is ordinary content — it is not removed from the document and keeps its normal meaning (see §2.3.4).
 
     2.3.3. Reference lines and parsing
 
@@ -112,11 +114,11 @@ Complete specification for the general reference system - the foundation for lin
 
         Removing the reference line (rather than blanking it) preserves the no-blank-line adjacency, so the element stays a definition and the reference line anchors the subject "API Endpoint".
 
-        At most one reference line may anchor a given element. Stacked reference lines, and a reference line whose anchored head line also carries an inline reference (which would nest two links over the same text), are illegal: the parser honors the whole-line anchor only and emits a diagnostic warning for the overlap.
+        At most one reference line may anchor a given element. Stacked reference lines, and a reference line whose anchored head line also carries an inline reference (which would nest two links over the same text), are illegal: the parser honors the first (uppermost) whole-line anchor only and emits a diagnostic warning for the overlap.
 
     2.3.4. Reference type and anchor scope
 
-        Whole-element anchoring applies only to link-like references — those that render as a span of linked text (Url, File, Session, General). Marker-style references — footnotes `[1]`, citations `[@key]`, and annotation references `[::label]` — render as markers or superscripts, so a whole-element anchor has no visual meaning for them; on a reference line they self-link or resolve as usual. This split is a property of the reference type, not of position.
+        Whole-element anchoring applies only to link-like references — those that render as a span of linked text (Url, File, Session, General). Every other reference type is marker-style: footnotes `[1]`, citations `[@key]`, annotation references `[::label]`, and the placeholder/unclassified forms (`[TK]`, NotSure). These render as markers or superscripts, so a whole-element anchor has no visual meaning for them — alone on a line they remain ordinary content (they do not form a reference line and are not removed), and inline they resolve as usual. This split is a property of the reference type, not of position.
 3. Reference Types
 
     3.1. External Links
