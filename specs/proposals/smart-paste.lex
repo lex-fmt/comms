@@ -39,7 +39,7 @@ Proposal: Smart Paste
             The transformed text to insert across `range`. The editor applies it as an ordinary single-edit replacement — it does not need to understand the transform, only to splice the returned string in.
 
         mode:
-            The classification the server applied (§3), as a string. Advisory: editors may surface it ("pasted as verbatim — not re-indented") but are not required to act on it. Including it keeps the transform debuggable from the editor side without a server round-trip.
+            The classification the server applied (§3), as one of the strings `passthrough-verbatim`, `passthrough-table`, `passthrough-single-line`, or `re-anchor`. Advisory: editors may surface it ("pasted as verbatim — not re-indented") but are not required to act on it. Including it keeps the transform debuggable from the editor side without a server round-trip.
 
     The request is synchronous from the author's perspective — the paste does not visibly complete until the edit lands — so the server's handler must be cheap. It reuses the already-parsed document state the server holds for the open buffer; it does not re-parse from scratch. The handler is pure with respect to document state: it reads the parse, computes a string, and mutates nothing.
 
@@ -63,7 +63,7 @@ Proposal: Smart Paste
 
 4. The Re-anchor Transform
 
-    In `reanchor` mode the server rewrites the clipboard's per-line indentation so the block lands at the caret's structural level while preserving its own internal shape. Three steps: find the anchor, find the clipboard's baseline, apply the difference.
+    In `re-anchor` mode the server rewrites the clipboard's per-line indentation so the block lands at the caret's structural level while preserving its own internal shape. Three steps: find the anchor, find the clipboard's baseline, apply the difference.
 
     4.1 The Anchor
 
@@ -73,7 +73,7 @@ Proposal: Smart Paste
 
     4.2 The Clipboard Baseline
 
-        The clipboard's own indentation is normalised before re-anchoring. Compute the baseline as the minimum leading-whitespace width across all *non-blank* lines of the clipboard text. This is the common indentation the whole block shares — zero for text copied from a document head, non-zero for a block lifted out of an existing nesting.
+        The clipboard's own indentation is normalised before re-anchoring. Compute the baseline as the minimum leading-whitespace width across all *non-blank* lines of the clipboard text. This is the common indentation the whole block shares — zero for text copied from a document head, non-zero for a block lifted out of an existing nesting. If the clipboard has no non-blank lines at all, the baseline is zero; every line is blank and is emitted empty (§4.3), so the transform is a no-op.
 
         Stripping the baseline and re-applying the anchor as a single constant offset is what preserves the clipboard's internal structure. A parent line and its indented child both shift by the same amount, so their *relative* relationship survives; only the block as a whole moves. Assuming the baseline is always zero — the naive model — corrupts any block that was copied from a position that was itself indented.
 
@@ -117,7 +117,7 @@ Proposal: Smart Paste
 
     The transform and classification are specified above; these are the boundary inputs a correct implementation and its tests must pin down.
 
-    - Empty clipboard: no edit; native paste (a no-op) proceeds.
+    - Empty clipboard: the server still returns the `{ text, mode }` shape, with `text` empty — the empty string itself is the no-op (for a collapsed caret the editor inserts nothing), so there is no separate "no edit" signal in the response.
     - Selection-replace paste: the anchor derives from the selection *start* (§4.1); the whole selection is the replaced range.
     - Trailing newline in the clipboard: preserved. Whether it opens a following block is the document's business once inserted, not the transform's.
     - Mixed tabs and spaces in the clipboard: leading whitespace is measured in display columns with the Lex tab width (four), so baseline and per-line widths are comparable; emitted indentation is spaces, consistent with Lex's canonical four-space levels.
