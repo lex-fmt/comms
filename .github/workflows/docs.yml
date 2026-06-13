@@ -1,4 +1,4 @@
-# Thin caller of arthur-debert/release/.github/workflows/mkdocs.yml@v2.
+# Thin caller of arthur-debert/release/.github/workflows/mkdocs.yml@v3.
 #
 # Build + deploy the lex.ing docs site. On push to main: build (strict)
 # + deploy to GitHub Pages. On PRs touching docs: build-only (strict),
@@ -37,6 +37,6 @@ permissions:
 
 jobs:
   docs:
-    uses: arthur-debert/release/.github/workflows/mkdocs.yml@v2
+    uses: arthur-debert/release/.github/workflows/mkdocs.yml@v3
     with:
       requirements: docs/requirements.txt
