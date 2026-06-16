@@ -1,0 +1,1 @@
+- `specs/elements/parameter.docs/` — added the first fixture set for the Parameters element: 10 minimal snippets covering unquoted/quoted values, multi-parameter lists, escape sequences (`\"`, `\\`), unescaped backslash, numeric values, and dashed/underscored keys.
