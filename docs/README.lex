@@ -64,7 +64,7 @@ mkdocs-lex plugin for native .lex rendering, and GitHub Pages for hosting.
    The workflow (.github/workflows/docs.yml) is a thin caller of the
    shared reusable workflow:
 
-      uses: arthur-debert/release/.github/workflows/mkdocs.yml@v2
+      uses: arthur-debert/release/.github/workflows/mkdocs.yml@v3
    :: yaml ::
 
    It runs `mkdocs build --strict` and deploys to GitHub Pages. PRs that
@@ -91,6 +91,6 @@ mkdocs-lex plugin for native .lex rendering, and GitHub Pages for hosting.
 
    This repo is managed by arthur-debert/release as the docs-site Kind
    (detected by the root mkdocs.yml). `release-core init` installs the
-   shared lint gate + tooling into .release/ (a temp dir) and symlinks; the mkdocs
+   shared lint gate + tooling into .release/ (a gitignored directory) and symlinks; the mkdocs
    Capability (.release-sync.yaml) adds bin/check-docs. Do not hand-edit
    files under .release/ or the managed symlinks.
