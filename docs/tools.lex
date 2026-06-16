@@ -128,24 +128,19 @@ Tools
             # Inspect with full AST properties
             lex inspect document.lex --ast-full
         :: shell ::
-    Example `.lex.toml`:
+    Example `.lex.toml` (dotted keys; equivalent to `[table]` sections):
 
-        [formatting.rules]
-        session_blank_lines_before = 2
-        session_blank_lines_after = 1
-        normalize_seq_markers = true
-        indent_string = "    "
-        
-        [convert.html]
-        theme = "default"
-        
-        [convert.pdf]
-        size = "default"  # or "mobile" or "lexed"
-        
-        [inspect.ast]
-        include_all_properties = false
-        show_line_numbers = true
-    :: text language=toml
+        formatting.rules.session_blank_lines_before = 2
+        formatting.rules.session_blank_lines_after = 1
+        formatting.rules.normalize_seq_markers = true
+        formatting.rules.indent_string = "    "
+
+        convert.html.theme = "default"
+        convert.pdf.size = "default"  # or "mobile" or "lexed"
+
+        inspect.ast.include_all_properties = false
+        inspect.ast.show_line_numbers = true
+    :: toml ::
 
 6. lex-babel Library
 
