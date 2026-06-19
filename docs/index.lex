@@ -63,10 +63,10 @@ Home
 
 5. Getting Started
 
-    - Visit [./why] for the full manifesto.
-    - Read the [./specs/] to explore the grammar.
-    - Install the Lex CLI tools at [./tools].
-    - Try the editors ([./editors]) for VS Code, Lexed, and Neovim integrations.
+    - Visit [./why.md] for the full manifesto.
+    - Read the [./specs/index.md] to explore the grammar.
+    - Install the Lex CLI tools at [./tools.md].
+    - Try the editors ([./editors.md]) for VS Code, Lexed, and Neovim integrations.
 
 6. Footnotes & References
 
