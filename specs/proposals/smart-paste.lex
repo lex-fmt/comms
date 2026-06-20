@@ -30,6 +30,8 @@ Proposal: Smart Paste
         range:
             The range the paste replaces. For a collapsed caret this is an empty range at the caret; for a paste over a selection it is the selection. The range *start* is the structural anchor (§4.1); the range itself is what the returned edit overwrites.
 
+            On a fresh line the editor may have auto-indented the caret, leaving whitespace ahead of the range start that an empty range does not overwrite. The server accounts for it: it measures the whitespace that survives before the range start and never re-emits that much as part of the anchor, so the first pasted line lands at the anchor whether or not the range covers the auto-indent (§4.4). The contract therefore tolerates the editor's native, minimal range — a collapsed caret needs no special expansion for the common case. The single exception is an auto-indent *deeper* than the anchor: the returned edit can only add indentation, never remove whitespace it does not replace, so an editor that wants an over-deep auto-indent corrected downward must expand the range to cover the line's leading whitespace.
+
         pastedText:
             The raw clipboard text, exactly as the editor holds it, including its original indentation and any trailing newline.
 
@@ -91,7 +93,7 @@ Proposal: Smart Paste
         The first pasted line is special whenever the range start is not at the beginning of a fresh, empty line — that is, whenever pasted content will sit on the same line as text that is already there.
 
         Fresh-line case:
-            The range start is on a blank or whitespace-only line (or at the auto-indented head of a new line). The whole paste is a new block. Every line, including the first, takes the §4.3 treatment; the line's pre-existing whitespace is part of the replaced range and is overwritten by the anchor.
+            The range start is on a blank or whitespace-only line (or at the auto-indented head of a new line). The whole paste is a new block. Every line, including the first, takes the §4.3 treatment. The first line is then reduced by any whitespace already present ahead of the range start — the auto-indent the editor left on the caret line that an empty range does not overwrite — so the anchor it carries is never stacked on top of that surviving whitespace and doubled. When the range *does* cover the leading whitespace (the editor expanded it, or the caret sat at column zero) nothing survives ahead of it and the full anchor applies; the two cases converge on the same anchored result. The one case the editor alone can fix is an auto-indent *deeper* than the anchor: an insert-only edit cannot remove the surplus, so an editor that wants it corrected downward expands the range to cover the line's leading whitespace (§2).
 
         Merge case:
             The range start follows existing content on its line. The first pasted line continues that content, so it is emitted with its leading whitespace stripped entirely and *no* anchor applied — it joins the text already on the line. Lines two onward take the full §4.3 treatment, because they are genuinely new lines that must sit at the document's structural level. Any document text that followed the caret moves below the last pasted line, as in an ordinary paste.
