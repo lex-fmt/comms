@@ -16,7 +16,7 @@ Lex is NOT Markdown. It uses indentation and conventions from publishing — no 
 
 Structure = indentation (4 spaces per level). The only explicit syntax marker is `::` (for annotations/verbatim blocks). Everything else is determined by position, indentation, and punctuation patterns.
 
-## The Six Elements
+## The Seven Elements
 
 ### 1. Paragraph (fallback)
 
@@ -114,6 +114,45 @@ Three forms:
 - **Single-line**: `:: label :: inline text`
 - **Block**: `:: label ::` + newline + indented content + bare `::` closing
 
+### 7. Table (subject + pipe rows)
+
+A subject line ending with `:`, then an **indented** block whose first non-blank line is a pipe row (starts and ends with `|`).
+
+```text
+Quarterly Results:
+    | Region | Revenue | Growth |
+    | North  | $1.2M   | +12%   |
+    | South  | $0.9M   | +4%    |
+```
+
+- Subject line ends with `:` (like a definition); its text is inline-parsed as the caption
+- Every row needs leading AND trailing pipes; cells are split on `|`
+- First row is the header by default
+- Cell content supports all inlines (`*bold*`, `_italic_`, `` `code` ``, `[refs]`)
+- Pipes need not visually align — the formatter aligns them; both forms are equivalent
+- Markdown-style separator rows (`|----|----|`) are accepted and ignored (eases migration)
+- Spanning uses `>>` (colspan) and `^^` (rowspan) in the absorbed cell
+
+Organizational hints — alignment and header-row count — ride on an optional
+`:: table ... ::` annotation **inside** the block, after the rows:
+
+```text
+Quarterly Results:
+    | Region | Revenue | Growth |
+    | North  | $1.2M   | +12%   |
+    | South  | $0.9M   | +4%    |
+
+    :: table align=lrr header=1 ::
+```
+
+- `align=lrr` — one letter per column: `l` left (default), `c` center, `r` right
+- `header=N` — number of leading header rows (`header=0` for none); default `1`
+- `table` is the blessed shortcut for the canonical `lex.tabular.table` label
+
+There is only **one** table type. Markdown pipe tables convert to and from
+native lex tables; the canonical `lex.tabular.table` label is the same element
+in its historical verbatim spelling.
+
 ## Inline Formatting
 
 ```text
@@ -161,7 +200,35 @@ The parser tries elements in this order:
 
 1. Verbatim block (has closing annotation)
 2. Annotation (`::` markers)
-3. List (blank line + 2+ items)
-4. Definition (subject + immediate indent)
-5. Session (title + blank line + indent)
-6. Paragraph (everything else)
+3. Table (subject + indented block whose first line is a pipe row)
+4. List (blank line + 2+ items)
+5. Definition (subject + immediate indent)
+6. Session (title + blank line + indent)
+7. Paragraph (everything else)
+
+## Checking Your Work
+
+After writing or generating a `.lex` file, lint it with `lexd check` — the
+checker that parses each document, runs the analysis pass, and reports
+diagnostics with a CI-friendly exit-code contract.
+
+```sh
+lexd check doc.lex              # lint one (or more) files
+lexd check *.lex --references   # also validate internal cross-references
+lexd check doc.lex --format json   # machine-readable findings
+```
+
+Exit codes make it scriptable:
+
+- `0` — clean (no finding at/above the `--fail-on` threshold, default `warning`)
+- `1` — at least one finding met the threshold
+- `2` — operational error (unreadable file, bad arguments)
+
+Notes:
+
+- `lex.include` annotations are expanded before checking (use `--no-includes`
+  to skip); findings inside an included file are blamed on that file's path.
+- `--references` additionally flags references whose target is absent from the
+  whole (merged) tree — sessions, definitions, annotations, citations.
+- Tune severity with `--fail-on error|warning|info|hint` and per-rule overrides
+  in `[diagnostics.rules]` of `.lex.toml`.
