@@ -128,7 +128,7 @@ Quarterly Results:
 - Subject line ends with `:` (like a definition); its text is inline-parsed as the caption
 - Every row needs leading AND trailing pipes; cells are split on `|`
 - First row is the header by default
-- Cell content supports all inlines (`*bold*`, `_italic_`, `` `code` ``, `[refs]`)
+- Cell content supports all inlines (`*bold*`, `_italic_`, backtick-code, `[refs]`)
 - Pipes need not visually align — the formatter aligns them; both forms are equivalent
 - Markdown-style separator rows (`|----|----|`) are accepted and ignored (eases migration)
 - Spanning uses `>>` (colspan) and `^^` (rowspan) in the absorbed cell
@@ -198,13 +198,13 @@ Escape with backslash: `\*not bold\*`, `\[not a link\]`
 
 The parser tries elements in this order:
 
-1. Verbatim block (has closing annotation)
+1. Verbatim block / Table (subject + indented block with a closing annotation;
+   a Table when the rows are pipe lines, otherwise a Verbatim block)
 2. Annotation (`::` markers)
-3. Table (subject + indented block whose first line is a pipe row)
-4. List (blank line + 2+ items)
-5. Definition (subject + immediate indent)
-6. Session (title + blank line + indent)
-7. Paragraph (everything else)
+3. List (blank line + 2+ items)
+4. Definition (subject + immediate indent)
+5. Session (title + blank line + indent)
+6. Paragraph (everything else)
 
 ## Checking Your Work
 
@@ -220,7 +220,7 @@ lexd check doc.lex --format json   # machine-readable findings
 
 Exit codes make it scriptable:
 
-- `0` — clean (no finding at/above the `--fail-on` threshold, default `warning`)
+- `0` — clean (no findings at/above the `--fail-on` threshold, default `warning`)
 - `1` — at least one finding met the threshold
 - `2` — operational error (unreadable file, bad arguments)
 
