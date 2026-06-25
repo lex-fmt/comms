@@ -1,0 +1,1 @@
+- migrate release.yml to dispatchable gh-action.yml@v3 thin caller (drop unused tarball assets + retired notify)

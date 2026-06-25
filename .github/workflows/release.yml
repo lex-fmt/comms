@@ -1,70 +1,44 @@
 name: Release
 
+# Thin caller — the canonical interpreted-repo release pipeline lives at
+# arthur-debert/release/.github/workflows/gh-action.yml@v3.
+#
+# comms is a docs-site / interpreted repo: no build, no crates. The
+# pipeline tags + pushes HEAD and cuts a GitHub Release whose notes are
+# rolled from the CHANGELOG/ fragment directory at cut. Bug fixes to the
+# pipeline arrive via the @v3 floating ref; nothing to change here.
+#
+# Migrated from the old hand-rolled tag-push workflow (2026-06): the
+# fleet release tooling (release-core cut) now launches releases via
+# `workflow_dispatch`, so a push-tag trigger is no longer dispatchable.
+# The previous specs.tar.gz / assets.tar.gz release assets were dropped
+# because nothing consumes them — every downstream pulls comms via the
+# git submodule, not via release tarballs. The `upstream-released`
+# downstream-notify step was also dropped: the push-cascade it served
+# has been retired in favour of consumers pulling.
+
 on:
-  push:
-    tags:
-      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g. 0.19.2 or 1.0.0-rc.1). No leading v.'
+        required: true
+        type: string
 
 permissions:
   contents: write
 
 jobs:
   release:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-
-      - name: Get release notes from tag annotation
-        id: notes
-        run: |
-          BODY=$(git tag -l --format='%(contents)' "$GITHUB_REF_NAME")
-          {
-            echo "body<<RELEASE_NOTES_EOF"
-            echo "$BODY"
-            echo "RELEASE_NOTES_EOF"
-          } >> "$GITHUB_OUTPUT"
-
-      - name: Create specs archive
-        run: |
-          tar -czf specs.tar.gz specs/
-
-      - name: Create assets archive
-        run: |
-          tar -czf assets.tar.gz assets/
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v3
-        with:
-          files: |
-            specs.tar.gz
-            assets.tar.gz
-          body: ${{ steps.notes.outputs.body }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # Layer 2 of the cross-repo release automation (lex-fmt/lex#640).
-      # Notify direct consumers that a new comms release is out so they
-      # can run their own on-upstream-released handler. comms's direct
-      # consumers are lex + tree-sitter-lex (they submodule comms). The
-      # editors (vscode/nvim/lexed) also submodule comms but listen for
-      # events from lex + tree-sitter releasing — that two-hop cascade
-      # avoids the editors racing on a comms release before lex /
-      # tree-sitter have caught up.
-      - name: Notify downstreams
-        env:
-          GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
-          VERSION: ${{ github.ref_name }}
-        run: |
-          set -euo pipefail
-          for repo in lex-fmt/lex lex-fmt/tree-sitter-lex; do
-            echo "Notifying $repo of comms@$VERSION"
-            gh api "repos/$repo/dispatches" --method POST \
-              -f event_type=upstream-released \
-              -F "client_payload[source]=comms" \
-              -F "client_payload[version]=$VERSION" \
-              -F "client_payload[ts]=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-              -F "client_payload[run_url]=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
-          done
+    uses: arthur-debert/release/.github/workflows/gh-action.yml@v3
+    with:
+      version: ${{ inputs.version }}
+      # comms ships no root action.yml — skip the manifest sanity check.
+      action-manifest: ''
+      # Roll CHANGELOG/unreleased-*.md fragments into CHANGELOG/<version>.md
+      # at cut and use that version body as the GitHub Release notes.
+      changelog-path: CHANGELOG.md
+    secrets:
+      # Unblocks the ruleset-protected default-branch changelog commit and
+      # the floating-major branch force-push. Falls back to GITHUB_TOKEN.
+      RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
