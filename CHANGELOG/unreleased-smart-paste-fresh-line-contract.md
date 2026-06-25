@@ -1,1 +1,0 @@
-- smart-paste spec: clarify the fresh-line collapsed-caret range contract (§2/§4.4)
